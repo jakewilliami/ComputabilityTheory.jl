@@ -104,7 +104,7 @@ end
 # coding the cℤ: ℤ ⟶ ℕ
 # e.g., with a single input
 # z ⟼ cℤ(z)
-cℤ(z::Integer)::Integer = z >= 0 ? 2 * z : (2 * abs(z)) - 1
+cℤ(z::Integer)::Integer = z >= 0 ? 2 * big(z) : (2 * abs(big(z))) - 1
 # e.g., with multiple inputs
 # z, w, ... ⟼ cℤ(z), cℤ(w), ...
 cℤ(z::Integer, w::Integer...) = cℤ(z), cℤ(w...)...
@@ -118,5 +118,5 @@ cℤ(r::Tuple{Integer,Integer})::Integer = pair_tuple(cℤ.(r)...)
 # Converts natural numbers to integers
 # ℕ ∋ cℤ⁻¹(n) ⟼ z ∈ ℤ
 cℤ⁻¹_error = "Invalid input. We have only defined this function for natural numbers.  Why are you even using it?"
-cℤ⁻¹(n::Integer) = n < 0 ? throw(error("$cℤ⁻¹_error")) : (iseven(n) ? Int(n / 2) : -Int(floor(n / 2) + 1))
+cℤ⁻¹(n::Integer) = n < 0 ? throw(error("$cℤ⁻¹_error")) : (iseven(n) ? Int(big(n) / 2) : -Int(floor(big(n) / 2) + 1))
 cℤ⁻¹(ns::AbstractArray{<:Integer}) = cℤ⁻¹.(ns)

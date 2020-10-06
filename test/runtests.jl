@@ -4,15 +4,13 @@
     "${BASH_SOURCE[0]}" "$@"
     =#
 
-# Testing
-
 include(joinpath(dirname(dirname(@__FILE__)), "src", "ComputabilityTheory.jl"))
 
 using .ComputabilityTheory
 using Test
 
 @testset "ComputabilityTheory.jl" begin
-
+### CODING
     @test pair_tuple(5,7) == 83
     @test pair_tuple(5,7,20) == 5439
     @test pair_tuple([1,2,3,4,5,6,7,8,9]...) == 131504586847961235687181874578063117114329409897615188504091716162522225834932122128288032336298131
@@ -45,14 +43,19 @@ using Test
     @test cℤ⁻¹(10029) == -5015
 	int_random1 = rand(Int)
 	int_random2 = rand(Int)
-	@test cℤ(cℤ⁻¹(int_random1)) == int_random1
+	@test cℤ(cℤ⁻¹(abs(int_random1))) == abs(int_random1)
 	@test cℤ⁻¹(cℤ(int_random2)) == int_random2
 
 ### PROGRAMME
-	@test occursin(r"0[[:space:]]*halt", show_programme(121))
+	io = IOBuffer()
+	show_programme(io, 121)
+	@test occursin(r"0[[:space:]]*halt", String(take!(io)))
 
 ### INSTRUCTIONS
 	@test Instruction(7).instruction == (1, 2)
-	@test Instruction((3, (1, 2))) == 58
+	@test Instruction((3, (1, 2))).I == 58
+	@test Instruction((3, 1, 2)).I == 58
+	@test Instruction(3, 1, 2).I == 58
+	@test Instruction(4, 0).I == 14
 
 end # end testset
