@@ -60,7 +60,14 @@ struct Instruction
 			c = instruction[3]
 			I = pair_tuple(a, pair_tuple(b, c))
 		else
-			I = pair_tuple(a, b)
+			if instruction[2] isa Tuple
+				second_tuple = b
+				b = second_tuple[1]
+				c = second_tuple[2]
+				I = pair_tuple(a, pair_tuple(b, c))
+			else
+				I = pair_tuple(a, b)
+			end
 		end
 			
 		new(I, a, b, c, instruction)
@@ -126,7 +133,7 @@ struct Programme
     end # end constructor (Programme) function
 end # end struct
 
-function show_programme(P::Programme)
+function show_programme(io::IO, P::Programme)
 	# println("\033[1;38mThe number for $(P.P) pertains to the following programme:\033[0;38m\n")
 
     instructions = P.instructions
@@ -158,11 +165,15 @@ function show_programme(P::Programme)
             message = "No known instruction for code ⟨$(join(instruction, ","))⟩"
         end
         
-        @printf("%-3.3s  %-60.60s\n", "$row_counter", "$message")
+        @printf(io, "%-3.3s  %-60.60s\n", "$row_counter", "$message")
     end
     
     return nothing
 end # end show_programme function
 
 # Given an integer, show_programme assumes it is a programme
-show_programme(P::Integer) = show_programme(Programme(P))
+show_programme(io::IO, P::Integer) = show_programme(io::IO, Programme(P))
+
+# Fall back to standard output
+show_programme(P::Programme) = show_programme(stdout, P)
+show_programme(P::Integer) = show_programme(stdout, Programme(P))
