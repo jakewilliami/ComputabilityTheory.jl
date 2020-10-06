@@ -27,6 +27,48 @@ include(joinpath(dirname(@__FILE__), "coding.jl"))
 
 using Printf: @printf
 
+struct Instruction
+	I::Integer
+	a::Integer
+	b::Integer
+	c::Union{Integer, Nothing}
+	instruction::Tuple
+	
+	function Instruction(I::Integer)
+		a, b = π(I, algebraic)
+		instruction = nothing
+		c = nothing
+		
+		if isequal(a, 3)
+			b, c = π(b, algebraic)
+			instruction = (a, (b, c))
+		else
+			instruction = (a, b)
+		end
+		
+		new(I, a, b, c, instruction)
+	end # end constructor function
+	
+	function Instruction(instruction::Tuple)
+		instruction_error = "Instructions whose coding tuple is more than three is not a valid instruction."
+		length(instruction) > 3 && throw(error("$instruction_error"))
+		a, b = instruction[1], instruction[2]
+		c = nothing
+		I = nothing
+		
+		if isequal(length(instruction), 3)
+			c = instruction[3]
+			I = pair_tuple(a, pair_tuple(b, c))
+		else
+			I = pair_tuple(a, b)
+		end
+			
+		new(I, a, b, c, instruction)
+	end # end constructor function
+	
+	Instruction(i::Integer, j::Integer...) = Instruction((i, j...))
+end # end struct
+
 struct Programme
     P::Integer
     p_length::Integer
@@ -36,8 +78,8 @@ struct Programme
     # declare constructor function
     function Programme(P::Integer)
         # Ensure the programme P is at least the nothing programme
-        if P < PairNTuple(1, PairNTuple(4, 0))
-            throw(error("The smallest possible programme is coded by ", PairNTuple(1, PairNTuple(4, 0)), "."))
+        if P < pair_tuple(1, pair_tuple(4, 0))
+            throw(error("The smallest possible programme is coded by ", pair_tuple(1, pair_tuple(4, 0)), "."))
         end
         
         # generate the snapshot of programme P

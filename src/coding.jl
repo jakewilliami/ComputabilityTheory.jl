@@ -21,8 +21,8 @@ import Base.π # needed in order to redefine it
 # <x1, x2, ..., xn> = <<x_1, ..., xn-1>, x_n>
 # And returns their pair.
 pairntuple_error = "This function is only defined for natural numbers.  Use cℤ."
-PairNTuple(x::Integer, y::Integer)::BigInt = x < 0 || y < 0 ? throw(error("$pairntuple_error")) : big(x) + binomial(big(x)+big(y)+1, 2)
-PairNTuple(x::Integer, y::Integer, z::Integer...)::BigInt = PairNTuple(PairNTuple(x, y), z...)
+pair_tuple(x::Integer, y::Integer)::BigInt = x < 0 || y < 0 ? throw(error("$pairntuple_error")) : big(x) + binomial(big(x)+big(y)+1, 2)
+pair_tuple(x::Integer, y::Integer, z::Integer...)::BigInt = pair_tuple(pair_tuple(x, y), z...)
 
 ##############################################################################
 
@@ -46,7 +46,7 @@ const algebraic = Algebra()
         m = big(m)
         
         @inbounds @fastmath Base.Cartesian.@nloops $n i d -> 0:m begin
-            if isequal(PairNTuple((Base.Cartesian.@ntuple $n i)...), m)
+            if isequal(pair_tuple((Base.Cartesian.@ntuple $n i)...), m)
                 return Base.Cartesian.@ntuple $n i
             end
         end
@@ -75,7 +75,7 @@ function π(m::Integer, ::Algebra)
     x = m - t
     y = w - x
         
-    if ! isequal(PairNTuple(x, y), m)
+    if ! isequal(pair_tuple(x, y), m)
         throw(error("The provided m = $m is not equal to ⟨ $x, $y ⟩, and so there has been an error in the calculation."))
     end
     
@@ -111,7 +111,7 @@ cℤ(z::Integer, w::Integer...) = cℤ(z), cℤ(w...)...
 cℤ(zs::AbstractArray{<:Integer}) = cℤ.(zs)
 # e.g., with a tuple, ℤ^2 ⟼ ℕ (integer pair to nat)
 # (z, w) ⟼ cℤ(<z, w>)
-cℤ(r::Tuple{Integer,Integer})::Integer = PairNTuple(cℤ.(r)...)
+cℤ(r::Tuple{Integer,Integer})::Integer = pair_tuple(cℤ.(r)...)
 
 ##############################################################################
 
