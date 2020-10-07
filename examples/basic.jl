@@ -4,6 +4,9 @@
     "${BASH_SOURCE[0]}" "$@"
     =#
 
+include(joinpath(dirname(dirname(@__FILE__)), "src", "ComputabilityTheory.jl"))
+
+using .ComputabilityTheory
 using Plots
 using CSV
 using DataFrames
@@ -107,3 +110,4 @@ function binary_search(a::BigInt, b::BigInt) # useful for bug fixing
     return a
 end
 
+programme_ui()

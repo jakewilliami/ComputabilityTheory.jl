@@ -27,84 +27,99 @@ include(joinpath(dirname(@__FILE__), "coding.jl"))
 
 using Printf: @printf
 
+struct Sequence
+	q::Integer
+	length::Integer
+	instructions::Tuple
+	
+	function Sequence(q::Integer)
+		length, instructions = π(q, algebraic)
+		instructions = isone(length) ? (instructions,) : π(instructions, length, algebraic)
+		
+		new(q, length, instructions)
+	end
+end # end struct
+
 struct Instruction
 	I::Integer
-	a::Integer
-	b::Integer
-	c::Union{Integer, Nothing}
+	first::Integer
+	second::Integer
+	third::Union{Integer, Nothing}
 	instruction::Tuple
 	
 	function Instruction(I::Integer)
-		a, b = π(I, algebraic)
+		first, second = π(I, algebraic)
 		instruction = nothing
-		c = nothing
+		third = nothing
 		
-		if isequal(a, 3)
-			b, c = π(b, algebraic)
-			instruction = (a, (b, c))
+		if isequal(first, 3)
+			second, third = π(second, algebraic)
+			instruction = (first, (second, third))
 		else
-			instruction = (a, b)
+			instruction = (first, second)
 		end
 		
-		new(I, a, b, c, instruction)
+		new(I, first, second, third, instruction)
 	end # end constructor function
 	
 	function Instruction(instruction::Tuple)
 		instruction_error = "Instructions whose coding tuple is more than three is not a valid instruction."
 		length(instruction) > 3 && throw(error("$instruction_error"))
-		a, b = instruction[1], instruction[2]
-		c = nothing
+		first, second = instruction[1], instruction[2]
+		third = nothing
 		I = nothing
 		
 		if isequal(length(instruction), 3)
-			c = instruction[3]
-			I = pair_tuple(a, pair_tuple(b, c))
+			third = instruction[3]
+			I = pair_tuple(first, pair_tuple(second, third))
 		else
 			if instruction[2] isa Tuple
-				second_tuple = b
-				b = second_tuple[1]
-				c = second_tuple[2]
-				I = pair_tuple(a, pair_tuple(b, c))
+				second_tuple = second
+				second = second_tuple[1]
+				third = second_tuple[2]
+				I = pair_tuple(first, pair_tuple(second, third))
 			else
-				I = pair_tuple(a, b)
+				I = pair_tuple(first, second)
 			end
 		end
 			
-		new(I, a, b, c, instruction)
+		new(I, first, second, third, instruction)
 	end # end constructor function
 	
 	Instruction(i::Integer, j::Integer...) = Instruction((i, j...))
 end # end struct
 
+increment(n::Integer) = Instruction(0, n)
+decrement(n::Integer) = Instruction(1, n)
+goto(k::Integer) = Instruction(2, k)
+ifzero_goto(n::Integer, k::Integer) = Instruction(3, (n, k))
+halt() = Instruction(4, 0)
+
 struct Programme
     P::Integer
-    p_length::Integer
+    length::Integer
     instructions::Vector{<:Tuple}
     max_line::Integer
     
     # declare constructor function
     function Programme(P::Integer)
         # Ensure the programme P is at least the nothing programme
-        if P < pair_tuple(1, pair_tuple(4, 0))
-            throw(error("The smallest possible programme is coded by ", pair_tuple(1, pair_tuple(4, 0)), "."))
-        end
+		smallest_programme = pair_tuple(1, pair_tuple(4, 0))
+        P < smallest_programme && throw(error("The smallest possible programme is coded by $(smallest_programme)."))
         
         # generate the snapshot of programme P
-        snapshot = π(P, algebraic)
-        p_length = snapshot[1]
+		sequence_dump = Sequence(P)
+		snapshot = Instruction.(sequence_dump.instructions)
+        length = sequence_dump.length
         
         # construct list of codes for each instruction
-        if iszero(p_length)  instruction_codes = 0  end
-        instruction_codes = isone(p_length) ? snapshot[2] : π(snapshot[2], p_length, algebraic)
+        if iszero(length)  instructions = 0  end
+        instructions = [i.instruction for i in snapshot]
         
         # check that the programme halts at the end
-        π(instruction_codes[end], algebraic) != (4, 0) && throw(error("Goto programmes neccesarily have a halting instruction."))
-        
-        # construct vector of tuples; each tuple represents a
-        instructions = Vector()
-        [instructions = [instructions..., π(i, algebraic)] for i in instruction_codes]
-        
-        max_line = length(instructions) - 1
+    	instructions[end] != (4, 0) && throw(error("Goto programmes neccesarily have a halting instruction."))
+            
+		max_line = length - 1
         row_counter = -1 # need offset as we start counting from zero
         
         # check that all programme instruction codes are valid instructions
@@ -129,7 +144,7 @@ struct Programme
         end
         
         # construct fields
-        new(P, p_length, instructions, max_line)
+        new(P, length, instructions, max_line)
     end # end constructor (Programme) function
 end # end struct
 
@@ -155,7 +170,7 @@ function show_programme(io::IO, P::Programme)
             k = instruction[2]
             message = "goto $k"
         elseif isequal(primary_identifier, 3)
-            snapshot = π(instruction[2], algebraic)
+            snapshot = instruction[2]
             n = snapshot[1]
             k = snapshot[2]
             message = "if R$n = 0 goto $k"

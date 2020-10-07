@@ -9,7 +9,7 @@ include(joinpath(dirname(dirname(@__FILE__)), "src", "ComputabilityTheory.jl"))
 using .ComputabilityTheory
 using Test
 
-@testset "ComputabilityTheory.jl" begin
+@time @testset "ComputabilityTheory.jl" begin
 ### CODING
     @test pair_tuple(5,7) == 83
     @test pair_tuple(5,7,20) == 5439
@@ -47,12 +47,24 @@ using Test
 	@test cℤ⁻¹(cℤ(int_random2)) == int_random2
 
 ### PROGRAMME
+	@test Programme(121).length == 1
+	@test Programme(972292871301644916468488152875266508938968846389326007980307063346008398713128885682044504108288931767348821063618087715644933567266540511345568504718733339523678538338052787779884557674350959673597803113281693069940562881722205193604550737455583875504348606989700013337656597740101535).length == 7
+	
 	io = IOBuffer()
 	show_programme(io, 121)
 	@test occursin(r"0[[:space:]]*halt", String(take!(io)))
+	
+	io = IOBuffer()
+	show_programme(io, 972292871301644916468488152875266508938968846389326007980307063346008398713128885682044504108288931767348821063618087715644933567266540511345568504718733339523678538338052787779884557674350959673597803113281693069940562881722205193604550737455583875504348606989700013337656597740101535)
+	@test occursin(r"6[[:space:]]*halt", String(take!(io)))
 
 ### INSTRUCTIONS
 	@test Instruction(7).instruction == (1, 2)
+	@test Instruction(7).first == 1
+	@test Instruction(7).second == 2
+	@test Instruction(7).third == nothing
+	@test Instruction(58).second == 1
+	@test Instruction(58).third == 2
 	@test Instruction((3, (1, 2))).I == 58
 	@test Instruction((3, 1, 2)).I == 58
 	@test Instruction(3, 1, 2).I == 58
