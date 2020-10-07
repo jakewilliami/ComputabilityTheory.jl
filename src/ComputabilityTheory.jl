@@ -11,7 +11,7 @@ include(joinpath(dirname(@__FILE__), "goto.jl"))
 
 export ∸, pair_tuple, algebraic, π, cℤ, cℤ⁻¹
 
-export Instruction, Programme
+export Sequence, Instruction, Programme
 export show_programme
 
 end # end module
