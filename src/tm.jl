@@ -22,6 +22,7 @@ programme_description("Calculate the binary successor")
 programme_description("Calculate the binary predecessor")
 programme_description("Calculates the sum of two binary numbers (blank delimited)")
 programme_description("x → x mod 3, where x is in tally-code")
+programme_description("Check whether input has equal number of zeros and ones")
 
 println("\n")
 println("Please choose a number as defined above.")
@@ -216,7 +217,7 @@ const programmes = [
         ]),
         Tape, Show
     ),
-    (Programme("Turing Machine to Calculate x mod 3, where x is in tallycode", "q0", "halt", Blank,
+    (Programme("Turing Machine to salculate x mod 3, where x is in tallycode", "q0", "halt", Blank,
         [
             Rule("q0", "q1", Blank, Blank, Right),
             Rule("q1", "q2", "1", Blank, Right),
@@ -226,6 +227,30 @@ const programmes = [
             Rule("q2", "halt", Blank, "1", Stay),
             Rule("q3", "q1", "1", Blank, Right),
             Rule("q1", "halt", Blank, Blank, Stay)
+        ]),
+        Tape, Show
+    ),
+    (Programme("Turing Machine which accepts strings with equal numbers of zeros and ones", "q0", "halt", Blank,
+        [
+            Rule("q0", "q1", Blank, Blank, Right),
+            Rule("q1", "q1", "B", "B", Right),
+            Rule("q1", "q2", "1", "A", Right),
+            Rule("q2", "q2", "B", "B", Right),
+            Rule("q2", "q2", "1", "1", Right),
+            Rule("q2", "q3", "0", "B", Left),
+            Rule("q3", "q3", "0", "0", Left),
+            Rule("q3", "q3", "1", "1", Left),
+            Rule("q3", "q3", "B", "B", Left),
+            Rule("q3", "q1", "A", "A", Right),
+            Rule("q1", "q4", "0", "A", Right),
+            Rule("q4", "q4", "B", "B", Right),
+            Rule("q4", "q4", "0", "0", Right),
+            Rule("q4", "q5", "1", "B", Left),
+            Rule("q5", "q5", "B", "B", Left),
+            Rule("q5", "q5", "0", "0", Left),
+            Rule("q5", "q5", "1", "1", Left),
+            Rule("q5", "q1", "A", "A", Right),
+            Rule("q1", "halt", Blank, Blank, Right)
         ]),
         Tape, Show
     ),
