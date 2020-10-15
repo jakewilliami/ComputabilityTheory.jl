@@ -83,6 +83,12 @@ julia> show_programme(9722928713016449164684881528752665089389688463893260079803
 4    goto 0
 5    R0 := R0 + 1
 6    halt
+
+julia> run_goto_programme(363183787614755732766753446033240)
+(1, 0)
+
+julia> run_goto_programme(363183787614755732766753446033240, Register(0, 0, 0 ,0))
+(1, 0, 0, 0)
 ```
 
 [code-style-img]: https://img.shields.io/badge/code%20style-blue-4495d1.svg
