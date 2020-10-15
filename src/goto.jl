@@ -27,19 +27,6 @@ include(joinpath(dirname(@__FILE__), "coding.jl"))
 
 using Printf: @printf
 
-struct Sequence
-	q::Integer
-	length::Integer
-	instructions::Tuple
-	
-	function Sequence(q::Integer)
-		length, instructions = π(q, algebraic)
-		instructions = isone(length) ? (instructions,) : π(instructions, length, algebraic)
-		
-		new(q, length, instructions)
-	end
-end # end struct
-
 struct Instruction
 	I::Integer
 	first::Integer
@@ -89,106 +76,146 @@ struct Instruction
 	Instruction(i::Integer, j::Integer...) = Instruction((i, j...))
 end # end struct
 
+struct Sequence
+	q::Integer
+	seq_length::Integer
+	instructions::Tuple
+	
+	function Sequence(q::Integer)
+		seq_length, instructions = π(q, algebraic)
+		instructions = isone(seq_length) ? (instructions,) : π(instructions, seq_length, algebraic)
+		
+		new(q, seq_length, instructions)
+	end
+	
+	function Sequence(t::Tuple)
+		q = nothing
+		seq_length, instructions = t[1], t[2]
+		
+		sequence_length_error = "The first number in your sequence should match the length of your sequence."
+		seq_length ≠ length(instructions) && throw(error("$(sequence_length_error)"))
+
+		if eltype(instructions) <: Integer
+			q = pair_tuple(t[1], t[2]...)
+		end
+		
+		if eltype(instructions) <: Tuple
+			q = pair_tuple(t[1], pair_tuple(pair_tuple.(t[2])))
+		end
+			
+			
+			
+		# if isone(length(t[2]))
+		# 	q = pair_tuple(t[1], t[2]...)
+		# else
+		# 	q = pair_tuple(t[1], pair_tuple(t[2]))
+		# end
+		
+		new(q, seq_length, instructions)
+	end
+	
+	Sequence(i::Integer, j::Tuple) = Sequence((i, j))
+	Sequence(i::Integer, j::Integer...) = Sequence((i, tuple(j...)))
+end # end struct
+
 increment(n::Integer) = Instruction(0, n)
 decrement(n::Integer) = Instruction(1, n)
 goto(k::Integer) = Instruction(2, k)
+ifzero_goto(t::Tuple) = Instruction(3, (t[1], t[2]))
 ifzero_goto(n::Integer, k::Integer) = Instruction(3, (n, k))
 halt() = Instruction(4, 0)
 
-struct Programme
+struct GoToProgramme
     P::Integer
-    length::Integer
+    programme_length::Integer
     instructions::Vector{<:Tuple}
     max_line::Integer
     
     # declare constructor function
-    function Programme(P::Integer)
+    function GoToProgramme(P::Integer) # P is the code for a sequence of a programme
         # Ensure the programme P is at least the nothing programme
-		smallest_programme = pair_tuple(1, pair_tuple(4, 0))
+		smallest_programme = Sequence(1, halt().I).q
         P < smallest_programme && throw(error("The smallest possible programme is coded by $(smallest_programme)."))
         
         # generate the snapshot of programme P
 		sequence_dump = Sequence(P)
 		snapshot = Instruction.(sequence_dump.instructions)
-        length = sequence_dump.length
+        programme_length = sequence_dump.seq_length
         
         # construct list of codes for each instruction
-        if iszero(length)  instructions = 0  end
+        if iszero(programme_length)  instructions = 0  end
         instructions = [i.instruction for i in snapshot]
         
         # check that the programme halts at the end
-    	instructions[end] != (4, 0) && throw(error("Goto programmes neccesarily have a halting instruction."))
+    	instructions[end] ≠ halt().instruction && throw(error("Goto programmes neccesarily have a halting instruction."))
             
-		max_line = length - 1
-        row_counter = -1 # need offset as we start counting from zero
+		max_line = programme_length - 1
+        row_counter = 0
         
         # check that all programme instruction codes are valid instructions
         for instruction in instructions
-            primary_identifier = instruction[1]
-            row_counter += 1
+            primary_identifier, secondary_identifier = instruction
             
-            if primary_identifier ∉ 0:4 || (isequal(primary_identifier, 4) && ! iszero(instruction[2]))
+			if primary_identifier < 0 || primary_identifier > 4 || (isequal(primary_identifier, 4) && ! iszero(secondary_identifier))
                 throw(error("No known instruction for code ⟨$(join(instruction, ","))⟩"))
             end
             
-            if isequal(primary_identifier, 4) && iszero(instruction[2]) && ! isequal(max_line, row_counter)
+            if isequal(primary_identifier, 4) && iszero(secondary_identifier) && ! isequal(max_line, row_counter)
                 throw(error("You must have exactly one halting instruction at the end of the programme."))
             end
             
-            k = instruction[2]
-            if isequal(primary_identifier, 2) && k > max_line
-                throw(error("I cannot go to line $k of a programme which has $max_line instructions."))
-            elseif isequal(primary_identifier, 2) && isequal(k, row_counter)
-                throw(error("I am told to go to my own line (at line $k, goto line $k), and so I am stuck in an infinite loop.  The only way to escape is to tell you.  Please help me."))
+            if isequal(primary_identifier, 2) && secondary_identifier > max_line
+                throw(error("I cannot go to line $secondary_identifier of a programme which has $max_line instructions."))
+            elseif isequal(primary_identifier, 2) && isequal(secondary_identifier, row_counter)
+                throw(error("I am told to go to my own line (at line $secondary_identifier, goto line $secondary_identifier), and so I am stuck in an infinite loop.  The only way to escape is to tell you.  Please help me."))
             end
+			
+			row_counter += 1
         end
         
         # construct fields
-        new(P, length, instructions, max_line)
-    end # end constructor (Programme) function
+        new(P, programme_length, instructions, max_line)
+    end # end constructor (GoToProgramme) function
 end # end struct
 
-function show_programme(io::IO, P::Programme)
+function show_programme(io::IO, P::GoToProgramme)
 	# println("\033[1;38mThe number for $(P.P) pertains to the following programme:\033[0;38m\n")
-
     instructions = P.instructions
     max_line = P.max_line
-    row_counter = -1
-    message = ""
+    row_counter = 0
+    message = string() # initalise message with empty string
     
     for instruction in instructions
-        primary_identifier = instruction[1]
-        row_counter += 1
+        primary_identifier, secondary_identifier = instruction
         
         if iszero(primary_identifier)
-            n = instruction[2]
+            n = secondary_identifier
             message = "R$n := R$n + 1"
         elseif isone(primary_identifier)
-            n = instruction[2]
+            n = secondary_identifier
             message = "R$n := R$n - 1"
         elseif isequal(primary_identifier, 2)
-            k = instruction[2]
+            k = secondary_identifier
             message = "goto $k"
         elseif isequal(primary_identifier, 3)
-            snapshot = instruction[2]
-            n = snapshot[1]
-            k = snapshot[2]
+            n, k = secondary_identifier
             message = "if R$n = 0 goto $k"
-        elseif isequal(primary_identifier, 4) && iszero(instruction[2])
+        elseif isequal(primary_identifier, 4) && iszero(secondary_identifier)
             message = "halt"
         else
             message = "No known instruction for code ⟨$(join(instruction, ","))⟩"
         end
         
         @printf(io, "%-3.3s  %-60.60s\n", "$row_counter", "$message")
+		row_counter += 1
     end
     
     return nothing
 end # end show_programme function
 
 # Given an integer, show_programme assumes it is a programme
-show_programme(io::IO, P::Integer) = show_programme(io::IO, Programme(P))
+show_programme(io::IO, P::Integer) = show_programme(io::IO, GoToProgramme(P))
 
 # Fall back to standard output
-show_programme(P::Programme) = show_programme(stdout, P)
-show_programme(P::Integer) = show_programme(stdout, Programme(P))
+show_programme(P::GoToProgramme) = show_programme(stdout, P)
+show_programme(P::Integer) = show_programme(stdout, GoToProgramme(P))

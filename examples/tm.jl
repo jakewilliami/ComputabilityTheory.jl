@@ -4,7 +4,7 @@
     "${BASH_SOURCE[0]}" "$@"
     =#
     
-# Adapted form https://rosettacode.org/wiki/Universal_Turing_machine#Julia
+include(joinpath(dirname(dirname(@__FILE__)), "src", "machines.jl"))
 
 Blank = " " # "□"
 # Tape = 11111111111
@@ -22,7 +22,7 @@ programme_description("Calculate the binary successor")
 programme_description("Calculate the binary predecessor")
 programme_description("Calculates the sum of two binary numbers (blank delimited)")
 programme_description("x → x mod 3, where x is in tally-code")
-programme_description("Check whether input has equal number of zeros and ones")
+programme_description("Halts if and only if the input has an equal number of zeros and ones")
 
 println("\n")
 println("Please choose a number as defined above.")
@@ -50,47 +50,9 @@ else
 end
 println("\n")
 
-
-
-
-
-#----------------------------------------------------------------------------
-import Base.show
-
-# parse tape into tuple of strings.
-# you can apply the string. function to this if you want to
-# ensure that the elements are strings and not substrings
-Tape = tuple(split(string(Tape), "")...)
-
-# define moving
-@enum Move Left=1 Stay Right
-
-# defing structs
-mutable struct MachineState
-    state::String
-    tape::Dict{Int, String}
-    headpos::Int
-end
- 
-struct Rule
-    instate::String
-    outstate::String
-    s1::String
-    s2::String
-    move::Move
-end
- 
-struct Programme
-    title::String
-    initial::String
-    final::String
-    blank::String
-    rules::Vector{Rule}
-end
-
 # define programmes
 const programmes = [
-    (Programme("Turing Machine to Truncate String", "q0", "halt", Blank,
+    (TMProgramme("Turing Machine to Truncate String", "q0", "halt", Blank,
         [
             Rule("q0", "q0", "0", "0", Right),
             Rule("q0", "q0", "1", "1", Right),
@@ -109,7 +71,7 @@ const programmes = [
         ]),
         Tape, Show
     ),
-    (Programme("Turing Machine to Duplicate Input", "q0", "halt", Blank,
+    (TMProgramme("Turing Machine to Duplicate Input", "q0", "halt", Blank,
         [
             Rule("q0", "q1", Blank, Blank, Right),
             Rule("q1", "q2", "1", "A", Right),
@@ -147,7 +109,7 @@ const programmes = [
         ]),
         Tape, Show
     ),
-    (Programme("Turing Machine to Calculate the Tally-code Successor", "q0", "halt", Blank,
+    (TMProgramme("Turing Machine to Calculate the Tally-code Successor", "q0", "halt", Blank,
         [
             Rule("q0", "q1", Blank, Blank, Right),
             Rule("q1", "q1", "1", "1", Right),
@@ -155,7 +117,7 @@ const programmes = [
         ]),
         Tape, Show
     ),
-    (Programme("Turing Machine to Calculate the Binary Successor", "q0", "halt", Blank,
+    (TMProgramme("Turing Machine to Calculate the Binary Successor", "q0", "halt", Blank,
         [
             Rule("q0", "q1", Blank, Blank, Right),
             Rule("q1", "q1", "0", "0", Right),
@@ -167,7 +129,7 @@ const programmes = [
         ]),
         Tape, Show
     ),
-    (Programme("Turing Machine to Calculate the Binary Predecessor", "q0", "halt", Blank,
+    (TMProgramme("Turing Machine to Calculate the Binary Predecessor", "q0", "halt", Blank,
         [
             Rule("q0", "q1", Blank, Blank, Right),
             Rule("q1", "q1", "0", "0", Right),
@@ -178,7 +140,7 @@ const programmes = [
         ]),
         Tape, Show
     ),
-    (Programme("Turing Machine to Add Two Binary Numbers", "q0", "halt", Blank,
+    (TMProgramme("Turing Machine to Add Two Binary Numbers", "q0", "halt", Blank,
         [
             Rule("q0", "q1", Blank, Blank, Right),
             Rule("q1", "q1", "0", "0", Right),
@@ -217,7 +179,7 @@ const programmes = [
         ]),
         Tape, Show
     ),
-    (Programme("Turing Machine to salculate x mod 3, where x is in tallycode", "q0", "halt", Blank,
+    (TMProgramme("Turing Machine to salculate x mod 3, where x is in tallycode", "q0", "halt", Blank,
         [
             Rule("q0", "q1", Blank, Blank, Right),
             Rule("q1", "q2", "1", Blank, Right),
@@ -230,7 +192,7 @@ const programmes = [
         ]),
         Tape, Show
     ),
-    (Programme("Turing Machine which accepts strings with equal numbers of zeros and ones", "q0", "halt", Blank,
+    (TMProgramme("Turing Machine which accepts strings with equal numbers of zeros and ones", "q0", "halt", Blank,
         [
             Rule("q0", "q1", Blank, Blank, Right),
             Rule("q1", "q1", "B", "B", Right),
@@ -255,52 +217,11 @@ const programmes = [
         Tape, Show
     ),
 ]
- 
-function show(io::IO, mstate::MachineState)
-    ibracket(i, curpos, val) = isequal(i, curpos) ? "[$val]" : " $val "
-    print(io, rpad("($(mstate.state))", 12))
-    for i in sort(collect(keys(mstate.tape)))
-        print(io, "   $(ibracket(i, mstate.headpos, mstate.tape[i]))")
-    end
-end
- 
-function turing(programme, tape, verbose)
-    println("\u001b[1;38m$(programme.title)\u001b[0;38m")
-    verbose && println(" State\t\t\tTape [head]\n", "-"^displaysize(stdout)[2])
-    
-    mstate = MachineState(programme.initial, tape, 1)
-    stepcount = 0
-    while true
-        if ! haskey(mstate.tape, mstate.headpos)
-            mstate.tape[mstate.headpos] = programme.blank
-        end
-        
-        verbose && println(mstate)
-        
-        for rule in programme.rules
-            if isequal(rule.instate, mstate.state) && isequal(rule.s1, mstate.tape[mstate.headpos])
-                mstate.tape[mstate.headpos] = rule.s2
-                if isequal(rule.move, Left)
-                    mstate.headpos -= 1
-                elseif isequal(rule.move, Right)
-                    mstate.headpos += 1
-                end
-                
-                mstate.state = rule.outstate
-                break
-            end
-        end
-        
-        stepcount += 1
-        
-        if isequal(mstate.state, programme.final)
-            break
-        end
-    end
-    
-    verbose && println(mstate)
-    println("Total number of steps taken: $stepcount")
-end
+
+# parse tape into tuple of strings.
+# you can apply the string. function to this if you want to
+# ensure that the elements are strings and not substrings
+Tape = tuple(split(string(Tape), "")...)
 
 function main()
     (prog, tape_tuple, verbose) = programmes[ChosenProgramme]
