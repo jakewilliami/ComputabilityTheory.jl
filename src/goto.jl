@@ -27,19 +27,6 @@ include(joinpath(dirname(@__FILE__), "coding.jl"))
 
 using Printf: @printf
 
-struct Sequence
-	q::Integer
-	length::Integer
-	instructions::Tuple
-	
-	function Sequence(q::Integer)
-		length, instructions = π(q, algebraic)
-		instructions = isone(length) ? (instructions,) : π(instructions, length, algebraic)
-		
-		new(q, length, instructions)
-	end
-end # end struct
-
 struct Instruction
 	I::Integer
 	first::Integer
@@ -89,20 +76,33 @@ struct Instruction
 	Instruction(i::Integer, j::Integer...) = Instruction((i, j...))
 end # end struct
 
+struct Sequence
+	q::Integer
+	length::Integer
+	instructions::Tuple
+	
+	function Sequence(q::Integer)
+		length, instructions = π(q, algebraic)
+		instructions = isone(length) ? (instructions,) : π(instructions, length, algebraic)
+		
+		new(q, length, instructions)
+	end
+end # end struct
+
 increment(n::Integer) = Instruction(0, n)
 decrement(n::Integer) = Instruction(1, n)
 goto(k::Integer) = Instruction(2, k)
 ifzero_goto(n::Integer, k::Integer) = Instruction(3, (n, k))
 halt() = Instruction(4, 0)
 
-struct Programme
+struct GoToProgramme
     P::Integer
     length::Integer
     instructions::Vector{<:Tuple}
     max_line::Integer
     
     # declare constructor function
-    function Programme(P::Integer)
+    function GoToProgramme(P::Integer)
         # Ensure the programme P is at least the nothing programme
 		smallest_programme = pair_tuple(1, pair_tuple(4, 0))
         P < smallest_programme && throw(error("The smallest possible programme is coded by $(smallest_programme)."))
@@ -145,10 +145,10 @@ struct Programme
         
         # construct fields
         new(P, length, instructions, max_line)
-    end # end constructor (Programme) function
+    end # end constructor (GoToProgramme) function
 end # end struct
 
-function show_programme(io::IO, P::Programme)
+function show_programme(io::IO, P::GoToProgramme)
 	# println("\033[1;38mThe number for $(P.P) pertains to the following programme:\033[0;38m\n")
 
     instructions = P.instructions
@@ -187,8 +187,8 @@ function show_programme(io::IO, P::Programme)
 end # end show_programme function
 
 # Given an integer, show_programme assumes it is a programme
-show_programme(io::IO, P::Integer) = show_programme(io::IO, Programme(P))
+show_programme(io::IO, P::Integer) = show_programme(io::IO, GoToProgramme(P))
 
 # Fall back to standard output
-show_programme(P::Programme) = show_programme(stdout, P)
-show_programme(P::Integer) = show_programme(stdout, Programme(P))
+show_programme(P::GoToProgramme) = show_programme(stdout, P)
+show_programme(P::Integer) = show_programme(stdout, GoToProgramme(P))
