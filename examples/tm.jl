@@ -239,7 +239,7 @@ function main()
     end
     
 
-    turing(prog, tape, verbose)
+    run_turing_machine(prog, tape, verbose)
     print("\n")
 end
 

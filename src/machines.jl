@@ -3,6 +3,9 @@
     exec julia --project="$(realpath $(dirname $0))" --color=yes --startup-file=no -e 'include(popfirst!(ARGS))' \
     "${BASH_SOURCE[0]}" "$@"
     =#
+    
+include(joinpath(dirname(@__FILE__), "coding.jl"))
+include(joinpath(dirname(@__FILE__), "utils.jl"))
 
 #---Turing Machine-------------------------------------------------------------------------
 # Adapted form https://rosettacode.org/wiki/Universal_Turing_machine#Julia
@@ -41,7 +44,7 @@ function Base.show(io::IO, mstate::MachineState)
     end
 end
  
-function turing(TMProgramme, tape, verbose)
+function run_turing_machine(TMProgramme, tape, verbose)
     println("\u001b[1;38m$(TMProgramme.title)\u001b[0;38m")
     verbose && println(" State\t\t\tTape [head]\n", "-"^displaysize(stdout)[2])
     
@@ -79,4 +82,16 @@ function turing(TMProgramme, tape, verbose)
     println("Total number of steps taken: $stepcount")
 end
 
-#----------------------------------------------------------------------------
+#--Register Machines--------------------------------------------------------------------------
+
+mutable struct RegisterMachine
+    contents::Tuple
+    
+    function RegisterMachine(contents::Tuple)
+        __arelessthan(0, contents) && throw(error("Registers must contain non-negative numbers."))
+        
+        new(contents)
+    end
+    
+    RegisterMachine(a::Integer...) = RegisterMachine(tuple(a...))
+end
