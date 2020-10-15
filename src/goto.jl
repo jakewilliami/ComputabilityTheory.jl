@@ -27,6 +27,12 @@ include(joinpath(dirname(@__FILE__), "coding.jl"))
 
 using Printf: @printf
 
+const __increment_identifier = 0
+const __decrement_identifier = 1
+const __goto_identifier = 2
+const __ifzero_goto_identifier = 3
+const __halt_identifier = (4, 0)
+
 struct Instruction
 	I::Integer
 	first::Integer
@@ -118,12 +124,12 @@ struct Sequence
 	Sequence(i::Integer, j::Integer...) = Sequence((i, tuple(j...)))
 end # end struct
 
-increment(n::Integer) = Instruction(0, n)
-decrement(n::Integer) = Instruction(1, n)
-goto(k::Integer) = Instruction(2, k)
-ifzero_goto(t::Tuple) = Instruction(3, (t[1], t[2]))
-ifzero_goto(n::Integer, k::Integer) = Instruction(3, (n, k))
-halt() = Instruction(4, 0)
+increment(n::Integer) = Instruction(__increment_identifier, n)
+decrement(n::Integer) = Instruction(__decrement_identifier, n)
+goto(k::Integer) = Instruction(__goto_identifier, k)
+ifzero_goto(t::Tuple) = Instruction(__ifzero_goto_identifier, (t[1], t[2])...)
+ifzero_goto(n::Integer, k::Integer) = Instruction(__ifzero_goto_identifier, (n, k)...)
+halt() = Instruction(__halt_identifier...)
 
 struct GoToProgramme
     P::Integer
@@ -150,23 +156,24 @@ struct GoToProgramme
     	instructions[end] ≠ halt().instruction && throw(error("Goto programmes neccesarily have a halting instruction."))
             
 		max_line = programme_length - 1
+		lower_bound, upper_bound = extrema([__increment_identifier, __decrement_identifier, __goto_identifier, __ifzero_goto_identifier, __halt_identifier...])
         row_counter = 0
         
         # check that all programme instruction codes are valid instructions
         for instruction in instructions
             primary_identifier, secondary_identifier = instruction
             
-			if primary_identifier < 0 || primary_identifier > 4 || (isequal(primary_identifier, 4) && ! iszero(secondary_identifier))
+			if primary_identifier < lower_bound || primary_identifier > upper_bound || (isequal(primary_identifier, halt().first) && ! isequal(secondary_identifier, halt().second))
                 throw(error("No known instruction for code ⟨$(join(instruction, ","))⟩"))
             end
             
-            if isequal(primary_identifier, 4) && iszero(secondary_identifier) && ! isequal(max_line, row_counter)
+            if isequal(primary_identifier, halt().first) && ! isequal(secondary_identifier, halt().second) && ! isequal(max_line, row_counter)
                 throw(error("You must have exactly one halting instruction at the end of the programme."))
             end
             
-            if isequal(primary_identifier, 2) && secondary_identifier > max_line
+            if isequal(primary_identifier, __goto_identifier) && secondary_identifier > max_line
                 throw(error("I cannot go to line $secondary_identifier of a programme which has $max_line instructions."))
-            elseif isequal(primary_identifier, 2) && isequal(secondary_identifier, row_counter)
+            elseif isequal(primary_identifier, __goto_identifier) && isequal(secondary_identifier, row_counter)
                 throw(error("I am told to go to my own line (at line $secondary_identifier, goto line $secondary_identifier), and so I am stuck in an infinite loop.  The only way to escape is to tell you.  Please help me."))
             end
 			
@@ -180,27 +187,25 @@ end # end struct
 
 function show_programme(io::IO, P::GoToProgramme)
 	# println("\033[1;38mThe number for $(P.P) pertains to the following programme:\033[0;38m\n")
-    instructions = P.instructions
-    max_line = P.max_line
     row_counter = 0
     message = string() # initalise message with empty string
     
-    for instruction in instructions
+    for instruction in P.instructions
         primary_identifier, secondary_identifier = instruction
         
-        if iszero(primary_identifier)
+		if isequal(primary_identifier, __increment_identifier)
             n = secondary_identifier
             message = "R$n := R$n + 1"
-        elseif isone(primary_identifier)
+        elseif isequal(primary_identifier, __decrement_identifier)
             n = secondary_identifier
             message = "R$n := R$n - 1"
-        elseif isequal(primary_identifier, 2)
+        elseif isequal(primary_identifier, __goto_identifier)
             k = secondary_identifier
             message = "goto $k"
-        elseif isequal(primary_identifier, 3)
+        elseif isequal(primary_identifier, __ifzero_goto_identifier)
             n, k = secondary_identifier
             message = "if R$n = 0 goto $k"
-        elseif isequal(primary_identifier, 4) && iszero(secondary_identifier)
+        elseif isequal(primary_identifier, halt().first) && isequal(secondary_identifier, halt().second)
             message = "halt"
         else
             message = "No known instruction for code ⟨$(join(instruction, ","))⟩"

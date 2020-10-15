@@ -13,7 +13,7 @@ include(joinpath(dirname(@__FILE__), "goto.jl"))
 export ∸, pair_tuple, algebraic, π, cℤ, cℤ⁻¹
 
 export Tape, Left, Stay, Right, MachineState, Rule, TMProgramme,
-        run_turing_machine, RegisterMachine
+        run_turing_machine, RegisterMachine, run_goto_programme
 
 export Sequence, Instruction, GoToProgramme, increment, decrement,
         goto, ifzero_goto, halt, show_programme

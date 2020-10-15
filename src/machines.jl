@@ -5,6 +5,7 @@
     =#
     
 include(joinpath(dirname(@__FILE__), "coding.jl"))
+include(joinpath(dirname(@__FILE__), "goto.jl"))
 include(joinpath(dirname(@__FILE__), "utils.jl"))
 
 #---Turing Machine-------------------------------------------------------------------------
@@ -85,13 +86,58 @@ end
 #--Register Machines--------------------------------------------------------------------------
 
 mutable struct RegisterMachine
-    contents::Tuple
+    contents::AbstractArray#Vector{<:Integer}
     
-    function RegisterMachine(contents::Tuple)
+    function RegisterMachine(contents::AbstractArray)
         __arelessthan(0, contents) && throw(error("Registers must contain non-negative numbers."))
         
         new(contents)
     end
     
-    RegisterMachine(a::Integer...) = RegisterMachine(tuple(a...))
+    RegisterMachine(T::Union{Tuple, UnitRange}) = RegisterMachine([T...])
+    RegisterMachine(a::Integer...) = RegisterMachine([a...])
 end
+
+function run_goto_programme(P::GoToProgramme, R::RegisterMachine)::Tuple
+    line_number = 0
+    
+    for instruction in P.instructions
+        primary_identifier, secondary_identifier = instruction
+    
+        if isequal(primary_identifier, __increment_identifier)
+            n = secondary_identifier
+            R.contents[n + 1] = R.contents[n + 1] + 1
+        elseif isequal(primary_identifier, __decrement_identifier)
+            n = secondary_identifier
+            R.contents[n + 1] = R.contents[n + 1] ∸ 1
+        elseif isequal(primary_identifier, __goto_identifier)
+            k = secondary_identifier
+            line_number = k
+            continue
+        elseif isequal(primary_identifier, __ifzero_goto_identifier)
+            n, k = secondary_identifier
+            if iszero(R.contents[n + 1])
+                line_number = k
+                continue
+            end
+        elseif isequal(primary_identifier, halt().first) && isequal(secondary_identifier, halt().second)
+            break
+        end
+        
+        line_number += 1
+    end
+    
+    return tuple(R.contents...)
+end
+
+function run_goto_programme(P::GoToProgramme)::Tuple
+    max_register = __extrema(P.instructions)[2][2] # the maximum value in the list of instructions in the second position
+    R = RegisterMachine(zeros(Integer, max_register+1)) # fill register with zeros
+    
+    return run_goto_programme(P, R)
+end
+
+run_goto_programme(P::GoToProgramme, T::Tuple) = run_goto_programme(P, RegisterMachine(T))
+run_goto_programme(P::Integer, T::Tuple) = run_goto_programme(GoToProgramme(P), RegisterMachine(T))
+run_goto_programme(P::Integer, R::RegisterMachine) = run_goto_programme(GoToProgramme(P), R)
+run_goto_programme(P::Integer) = run_goto_programme(GoToProgramme(P))

@@ -12,7 +12,7 @@ import Base.π # needed in order to redefine it
 
 # Dot minus (monus):
 # i.e., truncated negation
-∸(x::Number, y::Number) = x - y >= 0 ? x - y : 0
+∸(x::Number, y::Number) = x - y ≥ 0 ? x - y : 0
 
 ##############################################################################
 
