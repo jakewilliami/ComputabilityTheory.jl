@@ -23,6 +23,7 @@ import Base.π # needed in order to redefine it
 pairntuple_error = "This function is only defined for natural numbers.  Use cℤ."
 pair_tuple(x::Integer, y::Integer)::BigInt = x < 0 || y < 0 ? throw(error("$pairntuple_error")) : big(x) + binomial(big(x)+big(y)+1, 2)
 pair_tuple(x::Integer, y::Integer, z::Integer...)::BigInt = pair_tuple(pair_tuple(x, y), z...)
+pair_tuple(t::Tuple) = pair_tuple(t...)
 
 ##############################################################################
 
