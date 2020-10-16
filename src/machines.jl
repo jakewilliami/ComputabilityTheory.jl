@@ -106,7 +106,7 @@ function run_goto_programme(P::GoToProgramme, R::RegisterMachine)::Tuple
     
         if isequal(primary_identifier, __increment_identifier)
             n = secondary_identifier
-            R.contents[n + 1] = R.contents[n + 1] + 1
+            R.contents[n + 1] += 1
         elseif isequal(primary_identifier, __decrement_identifier)
             n = secondary_identifier
             R.contents[n + 1] = R.contents[n + 1] ∸ 1
