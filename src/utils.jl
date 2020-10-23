@@ -7,7 +7,7 @@
 #=
 Check that all elements in a list are less than a given x.
 =#
-@inline function __arelessthan(x::Number, A::AbstractArray)::Bool
+@inline function arelessthan(x::Number, A::AbstractArray)::Bool
     @inbounds for a in A
         a < x && return true
     end
@@ -15,14 +15,14 @@ Check that all elements in a list are less than a given x.
     return false
 end
 
-@inline function __arelessthan(x::Number, T::Tuple)::Bool
+@inline function arelessthan(x::Number, T::Tuple)::Bool
     A = [T...]
-    return __arelessthan(x, A)
+    return arelessthan(x, A)
 end
 
-@inline function __arelessthan(x::Number, a::Number...)::Bool
+@inline function arelessthan(x::Number, a::Number...)::Bool
     A = [a...]
-    return __arelessthan(x, A)
+    return arelessthan(x, A)
 end
 
 #=
@@ -34,7 +34,7 @@ julia> extrema((4,0), (1,2), (3,2), (5,2))
 
 WARNING: This function is entirely for machines.jl, and should not be used elsewhere
 =#
-function __extrema(A::AbstractArray{T}) where T <: Tuple
+function extrema_tuple(A::AbstractArray{T}) where T <: Tuple
     min_i, min_j = A[1][1], A[1][2][1]
     max_i, max_j = A[1][1], A[1][2][1]
     
@@ -60,4 +60,4 @@ function __extrema(A::AbstractArray{T}) where T <: Tuple
     return (min_i, max_i), (min_j, max_j)
 end
 
-__extrema(T::Tuple...) = __extrema([T...])
+extrema_tuple(T::Tuple...) = extrema_tuple([T...])

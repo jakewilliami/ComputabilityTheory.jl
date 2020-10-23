@@ -89,7 +89,7 @@ mutable struct RegisterMachine
     contents::AbstractArray#Vector{<:Integer}
     
     function RegisterMachine(contents::AbstractArray)
-        __arelessthan(0, contents) && throw(error("Registers must contain non-negative numbers."))
+        arelessthan(0, contents) && throw(error("Registers must contain non-negative numbers."))
         
         new(contents)
     end
@@ -131,7 +131,7 @@ function run_goto_programme(P::GoToProgramme, R::RegisterMachine)::Tuple
 end
 
 function run_goto_programme(P::GoToProgramme)::Tuple
-    max_register = __extrema(P.instructions)[2][2] # the maximum value in the list of instructions in the second position
+    max_register = extrema_tuple(P.instructions)[2][2] # the maximum value in the list of instructions in the second position
     R = RegisterMachine(zeros(Integer, max_register+1)) # fill register with zeros
     
     return run_goto_programme(P, R)
