@@ -3,7 +3,8 @@
     exec julia --project="$(realpath $(dirname $0))" --color=yes --startup-file=no -e 'include(popfirst!(ARGS))' \
     "${BASH_SOURCE[0]}" "$@"
     =#
-    
+
+include(joinpath(dirname(@__FILE__), "abstract_types.jl"))
 include(joinpath(dirname(@__FILE__), "coding.jl"))
 include(joinpath(dirname(@__FILE__), "goto.jl"))
 include(joinpath(dirname(@__FILE__), "utils.jl"))
@@ -15,21 +16,21 @@ include(joinpath(dirname(@__FILE__), "utils.jl"))
 @enum Move Left=1 Stay Right
 
 # defing structs
-mutable struct MachineState
+mutable struct MachineState <: MachineComponent
     state::String
     tape::Dict{Int, String}
     headpos::Int
 end
  
-struct Rule
+struct Rule <: MachineComponent
     instate::String
     outstate::String
     s1::String
     s2::String
     move::Move
 end
- 
-struct TMProgramme
+
+struct TMProgramme <: TuringMachine
     title::String
     initial::String
     final::String
@@ -85,7 +86,7 @@ end
 
 #--Register Machines--------------------------------------------------------------------------
 
-mutable struct RegisterMachine
+mutable struct RegisterMachine <: Machine
     contents::AbstractArray#Vector{<:Integer}
     
     function RegisterMachine(contents::AbstractArray)
