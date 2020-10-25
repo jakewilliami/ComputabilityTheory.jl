@@ -85,16 +85,6 @@ function programme_ui()
 
 end
 
-function test_random(d::Integer)
-    # random = abs(rand(Int)) + 121
-    random = rand(121:2000)
-    
-    println("The programme coded by the number $random is shown in $d instructions as follows:\n")
-    
-    show_programme(pair_tuple(d, pair_tuple(random, pair_tuple(4, 0))))
-end
-
-
 # helper
 function binary_search(a::BigInt, b::BigInt) # useful for bug fixing
     while a != b
@@ -110,4 +100,4 @@ function binary_search(a::BigInt, b::BigInt) # useful for bug fixing
     return a
 end
 
-programme_ui()
+# programme_ui()

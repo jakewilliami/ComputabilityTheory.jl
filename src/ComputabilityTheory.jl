@@ -6,9 +6,13 @@
     
 module ComputabilityTheory
 
+include(joinpath(dirname(@__FILE__), "abstract_types.jl"))
 include(joinpath(dirname(@__FILE__), "coding.jl"))
 include(joinpath(dirname(@__FILE__), "machines.jl"))
 include(joinpath(dirname(@__FILE__), "goto.jl"))
+
+export Machine, TuringMachine, MachineComponent, Programme,
+        ProgrammeComponent
 
 export ∸, pair_tuple, algebraic, π, cℤ, cℤ⁻¹
 
@@ -16,6 +20,6 @@ export Tape, Left, Stay, Right, MachineState, Rule, TMProgramme,
         run_turing_machine, RegisterMachine, run_goto_programme
 
 export Sequence, Instruction, GoToProgramme, increment, decrement,
-        goto, ifzero_goto, halt, show_programme
+        goto, ifzero_goto, halt, show_programme, rand
 
 end # end module

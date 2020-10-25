@@ -23,6 +23,7 @@ It should also be noted that the sequence code for some base cases is defined as
  - if d = 1, for a ∈ ℕ, the sequence code [a] for the sequence (a) of length 1, is <1, a>.
 =#
 
+include(joinpath(dirname(@__FILE__), "abstract_types.jl"))
 include(joinpath(dirname(@__FILE__), "coding.jl"))
 
 using Printf: @printf
@@ -33,7 +34,7 @@ const __goto_identifier = 2
 const __ifzero_goto_identifier = 3
 const __halt_identifier = (4, 0)
 
-struct Instruction
+struct Instruction <: ProgrammeCompoment
 	I::Integer
 	first::Integer
 	second::Integer
@@ -82,7 +83,7 @@ struct Instruction
 	Instruction(i::Integer, j::Integer...) = Instruction((i, j...))
 end # end struct
 
-struct Sequence
+struct Sequence <: ProgrammeCompoment
 	q::Integer
 	seq_length::Integer
 	instructions::Tuple
@@ -97,30 +98,23 @@ struct Sequence
 	function Sequence(t::Tuple)
 		q = nothing
 		seq_length, instructions = t[1], t[2]
-		
-		sequence_length_error = "The first number in your sequence should match the length of your sequence."
-		seq_length ≠ length(instructions) && throw(error("$(sequence_length_error)"))
 
 		if eltype(instructions) <: Integer
 			q = pair_tuple(t[1], t[2]...)
 		end
 		
 		if eltype(instructions) <: Tuple
-			q = pair_tuple(t[1], pair_tuple(pair_tuple.(t[2])))
+			# q = pair_tuple(t[1], pair_tuple(pair_tuple.(t[2])))
+			q = pair_tuple(t[1], pair_tuple(t[2]))
 		end
-			
-			
-			
-		# if isone(length(t[2]))
-		# 	q = pair_tuple(t[1], t[2]...)
-		# else
-		# 	q = pair_tuple(t[1], pair_tuple(t[2]))
-		# end
+		
+		# sequence_length_error = "The first number in your sequence should match the length of your sequence."
+		# seq_length ≠ length(instructions) && throw(error("$(sequence_length_error)"))
 		
 		new(q, seq_length, instructions)
 	end
 	
-	Sequence(i::Integer, j::Tuple) = Sequence((i, j))
+	Sequence(i::Integer, j::Tuple) = Sequence(pair_tuple(i, pair_tuple(j...)))
 	Sequence(i::Integer, j::Integer...) = Sequence((i, tuple(j...)))
 end # end struct
 
@@ -131,7 +125,7 @@ ifzero_goto(t::Tuple) = Instruction(__ifzero_goto_identifier, (t[1], t[2])...)
 ifzero_goto(n::Integer, k::Integer) = Instruction(__ifzero_goto_identifier, (n, k)...)
 halt() = Instruction(__halt_identifier...)
 
-struct GoToProgramme
+struct GoToProgramme <: Programme
     P::Integer
     programme_length::Integer
     instructions::Vector{<:Tuple}
@@ -149,9 +143,7 @@ struct GoToProgramme
         programme_length = sequence_dump.seq_length
         
         # construct list of codes for each instruction
-        if iszero(programme_length)  instructions = 0  end
-        instructions = [i.instruction for i in snapshot]
-        
+        instructions = iszero(programme_length) ? 0 : [i.instruction for i in snapshot]
         # check that the programme halts at the end
     	instructions[end] ≠ halt().instruction && throw(error("Goto programmes neccesarily have a halting instruction."))
             
@@ -224,3 +216,17 @@ show_programme(io::IO, P::Integer) = show_programme(io::IO, GoToProgramme(P))
 # Fall back to standard output
 show_programme(P::GoToProgramme) = show_programme(stdout, P)
 show_programme(P::Integer) = show_programme(stdout, GoToProgramme(P))
+
+function Base.rand(::Type{T}, d::Integer; upper_bound::Integer=200) where T <: GoToProgramme
+	return pair_tuple(d, pair_tuple(rand(1:upper_bound), halt().I))
+	return Sequence((d, (rand(1:upper_bound), halt().I))).q
+end
+
+function Base.rand(::Type{T}) where T <: GoToProgramme
+	while true
+		try
+			return rand(T, rand(2:10))
+		catch
+		end
+	end
+end
