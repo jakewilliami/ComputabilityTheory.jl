@@ -1,7 +1,7 @@
 name = "ComputabilityTheory"
 uuid = "1aac4ff9-3d20-4305-ad99-6d6ea6b313c2"
 authors = ["Jake W. Ireland <jakewilliami@icloud.com> and contributors"]
-version = "0.1.0"
+version = "0.1.1"
 
 [compat]
 julia = "1.5"
