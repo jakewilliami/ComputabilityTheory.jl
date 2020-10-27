@@ -11,6 +11,8 @@ This is a minimal package for a pure Julia implementation of tools used in [Comp
 ## Examples
 
 ```julia
+julia> using ComputabilityTheory
+
 julia> pair_tuple(5,7) # code pair of natural numbers as a natural number
 83
 
