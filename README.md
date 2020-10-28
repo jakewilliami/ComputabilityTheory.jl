@@ -2,7 +2,7 @@
     ComputabilityTheory.jl
 </h1>
 
-[![Code Style: Blue][code-style-img]][code-style-url] [![Build Status](https://travis-ci.com/jakewilliami/CodingTheory.jl.svg?branch=master)](https://travis-ci.com/jakewilliami/CodingTheory.jl) ![Project Status](https://img.shields.io/badge/status-maturing-green)
+[![Code Style: Blue][code-style-img]][code-style-url] [![Build Status](https://travis-ci.com/jakewilliami/ComputabilityTheory.jl.svg?branch=master)](https://travis-ci.com/jakewilliami/ComputabilityTheory.jl) ![Project Status](https://img.shields.io/badge/status-maturing-green)
 
 
 ## Description
