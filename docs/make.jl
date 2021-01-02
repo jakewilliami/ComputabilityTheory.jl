@@ -2,9 +2,6 @@ include(joinpath(dirname(@__DIR__), "src", "ComputabilityTheory.jl"))
 using Documenter, .ComputabilityTheory
 
 Documenter.makedocs(
-    root = ".",
-    source = "src",
-    build = "build",
     clean = true,
     doctest = true,
     modules = Module[ComputabilityTheory],
@@ -15,4 +12,14 @@ Documenter.makedocs(
     pages = [
         "Index" => "index.md",
     ]
+)
+
+deploydocs(
+    target = "build",
+    repo   = "github.com/jakewilliami/ComputabilityTheory.jl.git",
+    branch = "gh-pages",
+    devbranch = "master",
+    devurl = "dev",
+    versions = ["stable" => "v^", "v#.#.#", "dev" => "dev"],
+    push_preview    = false
 )

@@ -2,7 +2,7 @@
     ComputabilityTheory.jl
 </h1>
 
-[![][docs-dev-img]][docs-dev-url] [![Code Style: Blue][code-style-img]][code-style-url] [![Build Status](https://travis-ci.com/jakewilliami/ComputabilityTheory.jl.svg?branch=master)](https://travis-ci.com/jakewilliami/ComputabilityTheory.jl) ![Project Status](https://img.shields.io/badge/status-maturing-green)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://jakewilliami.github.io/ComputabilityTheory.jl/stable) [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://jakewilliami.github.io/ComputabilityTheory.jl/dev) [![Code Style: Blue][code-style-img]][code-style-url] [![Build Status](https://travis-ci.com/jakewilliami/ComputabilityTheory.jl.svg?branch=master)](https://travis-ci.com/jakewilliami/ComputabilityTheory.jl) ![Project Status](https://img.shields.io/badge/status-maturing-green)
 
 
 This is a minimal package for a pure Julia implementation of tools used in [Computability Theory](https://en.wikipedia.org/wiki/Computability_theory).  This is the science involving mathematical models of what it means to compute.  This naturally progresses to the idea of complexity: how much memory is used in computing?  How long will it take?  Does it halt?
@@ -69,4 +69,3 @@ julia> show_programme(rand(GoToProgramme), 3) # a reasonably small random progra
 
 [code-style-img]: https://img.shields.io/badge/code%20style-blue-4495d1.svg
 [code-style-url]: https://github.com/invenia/BlueStyle
-
