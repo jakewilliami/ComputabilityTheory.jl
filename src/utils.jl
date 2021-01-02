@@ -7,7 +7,7 @@
 #=
 Check that all elements in a list are less than a given x.
 =#
-@inline function arelessthan(x::Number, A::AbstractArray)::Bool
+@inline function anylessthan(x::Number, A::AbstractArray)::Bool
     @inbounds for a in A
         a < x && return true
     end
@@ -15,12 +15,12 @@ Check that all elements in a list are less than a given x.
     return false
 end
 
-@inline function arelessthan(x::Number, T::Tuple)::Bool
+@inline function anylessthan(x::Number, T::Tuple)::Bool
     A = [T...]
     return arelessthan(x, A)
 end
 
-@inline function arelessthan(x::Number, a::Number...)::Bool
+@inline function anylessthan(x::Number, a::Number...)::Bool
     A = [a...]
     return arelessthan(x, A)
 end
@@ -33,6 +33,7 @@ julia> extrema((4,0), (1,2), (3,2), (5,2))
 ((1, 5), (0, 2))
 
 WARNING: This function is entirely for machines.jl, and should not be used elsewhere
+See also extrema from MultidimensionalTools.jl
 =#
 function extrema_tuple(A::AbstractArray{T}) where T <: Tuple
     min_i, min_j = A[1][1], A[1][2][1]

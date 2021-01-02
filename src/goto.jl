@@ -4,36 +4,46 @@
     "${BASH_SOURCE[0]}" "$@"
     =#
 
-#=
-A goto programme can be coded by a single number!
-For any d ∈ ℕ, the sequence code of a sequence (a0,a1,...,ad-1) ∈ ℕ^d, denoted by [a0,a1,...,ad-1], is
-    ⟨d,⟨a0,a1,...,ad-1⟩⟩
-Then, P is [a0,a1,...,ad-1].  So, given P, π(P, 2, 0, algebraic) is the number of lines of the programme, d;
-and π(P, 2, 1, algebraic) is the programme itself.  Depairing that d times, we get a tuple of integers: the
-instructions of the programme (one integer codes one line in the programme).
-We define each line of the programme as being coded as follows:
- - The code for "Rn := Rn + 1" is ⟨0, n⟩;
- - The code for "Rn := Rn - 1" is ⟨1, n⟩;
- - The code for "goto k" is ⟨2, k⟩;
- - The code for "if Rn = 0 goto k" is ⟨3, ⟨n, k⟩⟩; and
- - The code for "halt" is ⟨4, 0⟩.
- 
-It should also be noted that the sequence code for some base cases is defined as follows:
- - if d = 0, the sequence code [] for the empty sequence is the number 0; and
- - if d = 1, for a ∈ ℕ, the sequence code [a] for the sequence (a) of length 1, is <1, a>.
-=#
-
-include(joinpath(dirname(@__FILE__), "abstract_types.jl"))
-include(joinpath(dirname(@__FILE__), "coding.jl"))
-
-using Printf: @printf
-
 const __increment_identifier = 0
 const __decrement_identifier = 1
 const __goto_identifier = 2
 const __ifzero_goto_identifier = 3
 const __halt_identifier = (4, 0)
 
+@doc raw"""
+```julia
+struct Instruction <: ProgrammeCompoment
+```
+
+An instruction is a command spanning a single line in a goto programme.
+
+This struct has the fields:
+  - `I::Integer`
+  - `first::Integer`
+  - `second::Integer`
+  - `third::Union{Integer, Nothing}`
+  - `instruction::Tuple`
+  
+---
+
+```julia
+Instruction(I::Integer)
+```
+
+Given an integer, this constructor function decodes the instruction.  An instruction can be one of five things, defined as follows:
+  - The code for "``Rn := Rn + 1``" is ``\left\langle 0, n\right\rangle``;
+  - The code for "``Rn := Rn - 1``" is ``\left\langle 1, n\right\rangle``;
+  - The code for "``\texttt{goto } k``" is ``\left\langle 2, k\right\rangle``;
+  - The code for "``\texttt{if } Rn = 0 \texttt{ goto } k``" is ``\left\langle 3, \left\langle n, k\right\rangle\right\rangle``; and
+  - The code for "``\texttt{halt}``" is ``\left\langle 4, 0\right\rangle``.
+
+```julia
+Instruction(instruction::Tuple)
+Instruction(i::Integer, j::Integer...) = Instruction((i, j...))
+```
+
+Given a tuple or a list of values, the value of the instruction is the pair of all inputs.
+"""
 struct Instruction <: ProgrammeCompoment
 	I::Integer
 	first::Integer
@@ -42,12 +52,12 @@ struct Instruction <: ProgrammeCompoment
 	instruction::Tuple
 	
 	function Instruction(I::Integer)
-		first, second = π(I, algebraic)
+		first, second = π(I)
 		instruction = nothing
 		third = nothing
 		
 		if isequal(first, 3)
-			second, third = π(second, algebraic)
+			second, third = π(second)
 			instruction = (first, (second, third))
 		else
 			instruction = (first, second)
@@ -59,9 +69,8 @@ struct Instruction <: ProgrammeCompoment
 	function Instruction(instruction::Tuple)
 		instruction_error = "Instructions whose coding tuple is more than three is not a valid instruction."
 		length(instruction) > 3 && throw(error("$instruction_error"))
-		first, second = instruction[1], instruction[2]
-		third = nothing
-		I = nothing
+		first, second = Base.first(instruction), instruction[2]
+		third = I = nothing
 		
 		if isequal(length(instruction), 3)
 			third = instruction[3]
@@ -83,33 +92,58 @@ struct Instruction <: ProgrammeCompoment
 	Instruction(i::Integer, j::Integer...) = Instruction((i, j...))
 end # end struct
 
+@doc raw"""
+```julia
+struct Sequence <: ProgrammeCompoment
+```
+
+For any ``d \in \mathbb{N}``, the sequence code of a sequence ``(a_0,a_1,\ldots,a_{d-1}) \in \mathbb{N}^d``, denoted by ``[a_0,a_1,\ldots,a_{d-1}]``, is
+
+```math
+\left\langle d, \left\langle a a_0,a_1,\ldots,a_{d-1}\right\rangle\right\rangle
+```
+
+The struct has the following fields:
+  - `q::Integer`
+  - `seq_length::Integer`
+  - `instructions::Tuple`
+
+```julia
+Sequence(q::Integer)
+Sequence(t::Tuple)
+Sequence(i::Integer, j::Tuple)
+Sequence(i::Integer, j::Integer...)
+```
+
+The constructor methods for this struct decode the given value(s) into the sequence.
+"""
 struct Sequence <: ProgrammeCompoment
 	q::Integer
 	seq_length::Integer
 	instructions::Tuple
 	
 	function Sequence(q::Integer)
-		seq_length, instructions = π(q, algebraic)
-		instructions = isone(seq_length) ? (instructions,) : π(instructions, seq_length, algebraic)
+		seq_length, instructions = π(q)
+		instructions = isone(seq_length) ? (instructions,) : π(instructions, seq_length)
 		
 		new(q, seq_length, instructions)
 	end
 	
 	function Sequence(t::Tuple)
 		q = nothing
-		seq_length, instructions = t[1], t[2]
+		seq_length, instructions = Base.first(t), t[2]
 
 		if eltype(instructions) <: Integer
 			q = pair_tuple(t[1], t[2]...)
 		end
 		
 		if eltype(instructions) <: Tuple
-			# q = pair_tuple(t[1], pair_tuple(pair_tuple.(t[2])))
-			q = pair_tuple(t[1], pair_tuple(t[2]))
+			# q = pair_tuple(Base.first(t), pair_tuple(pair_tuple.(t[2])))
+			q = pair_tuple(Base.first(t), pair_tuple(t[2]))
 		end
 		
-		# sequence_length_error = "The first number in your sequence should match the length of your sequence."
-		# seq_length ≠ length(instructions) && throw(error("$(sequence_length_error)"))
+		sequence_length_error = "The first number in your sequence should match the length of your sequence."
+		seq_length ≠ length(instructions) && throw(error("$(sequence_length_error)"))
 		
 		new(q, seq_length, instructions)
 	end
@@ -118,13 +152,106 @@ struct Sequence <: ProgrammeCompoment
 	Sequence(i::Integer, j::Integer...) = Sequence((i, tuple(j...)))
 end # end struct
 
+@doc raw"""
+```julia
+increment(n::Integer)
+```
+
+Constructs an `Instruction` object for incrementing the ``n\textsuperscript{th}`` register.
+
+The code for "``Rn := Rn + 1``" is ``\left\langle 0, n\right\rangle``.
+"""
 increment(n::Integer) = Instruction(__increment_identifier, n)
+
+@doc raw"""
+```julia
+decrement(n::Integer)
+```
+
+Constructs an `Instruction` object for decrementing the ``n\textsuperscript{th}`` register.
+
+The code for "``Rn := Rn - 1``" is ``\left\langle 1, n\right\rangle``.
+"""
 decrement(n::Integer) = Instruction(__decrement_identifier, n)
+
+@doc raw"""
+```julia
+goto(n::Integer)
+```
+
+Constructs an `Instruction` object for going to line ``k``.
+
+The code for "``\texttt{goto } k``" is ``\left\langle 2, k\right\rangle``.
+"""
 goto(k::Integer) = Instruction(__goto_identifier, k)
-ifzero_goto(t::Tuple) = Instruction(__ifzero_goto_identifier, (t[1], t[2])...)
+
+@doc raw"""
+```julia
+ifzero_goto(t::NTuple{2, Integer})
+ifzero_goto(n::Integer, k::Integer)
+```
+
+Constructs an `Instruction` object for going to line ``k`` if and only  if the ``n\textsuperscript{th}`` register is zero.
+
+The code for "``\texttt{if } Rn = 0 \texttt{ goto } k``" is ``\left\langle 3, \left\langle n, k\right\rangle\right\rangle``.
+"""
+ifzero_goto(t::NTuple{2, Integer}) = Instruction(__ifzero_goto_identifier, t...)
 ifzero_goto(n::Integer, k::Integer) = Instruction(__ifzero_goto_identifier, (n, k)...)
+
+@doc raw"""
+```julia
+halt()
+```
+
+Constructs an `Instruction` object for the final line of all goto programmes: `halt`.
+
+The code for "``\texttt{halt}``" is ``\left\langle 4, 0\right\rangle``.
+"""
 halt() = Instruction(__halt_identifier...)
 
+@doc raw"""
+```julia
+struct GoToProgramme <: Programme
+```
+
+This struct has fields:
+  - `P::Integer`
+  - `programme_length::Integer`
+  - `instructions::Vector{<:Tuple}`
+  - `max_line::Integer`
+  
+---
+
+```julia
+GoToProgramme(P::Integer)
+```
+
+A goto programme can be coded by a single number!  This number in the struct is `P`.
+
+---
+
+For any ``d \in \mathbb{N}``, the sequence code of a sequence ``(a_0,a_1,\ldots,a_{d-1}) \in \mathbb{N}^d``, denoted by ``[a_0,a_1,\ldots,a_{d-1}]``, is
+
+```math
+\left\langle d, \left\langle a a_0,a_1,\ldots,a_{d-1}\right\rangle\right\rangle
+```
+
+Then, P is ``[a_0,a_1,\ldots,a_{d-1}]``.  So, given ``P``, `π(P, 2, 0)` is the number of lines of the programme, d;
+and `π(P, 2, 1)` is the programme itself.  Depairing that ``d`` times, we get a tuple of integers: the
+instructions of the programme (one integer codes one line in the programme).
+We define each line of the programme as being coded as follows:
+  - The code for "``Rn := Rn + 1``" is ``\left\langle 0, n\right\rangle``;
+  - The code for "``Rn := Rn - 1``" is ``\left\langle 1, n\right\rangle``;
+  - The code for "``\texttt{goto } k``" is ``\left\langle 2, k\right\rangle``;
+  - The code for "``\texttt{if } Rn = 0 \texttt{ goto } k``" is ``\left\langle 3, \left\langle n, k\right\rangle\right\rangle``; and
+  - The code for "``\texttt{halt}``" is ``\left\langle 4, 0\right\rangle``.
+ 
+It should also be noted that the sequence code for some base cases is defined as follows:
+  - if ``d = 0``, the sequence code ``[]`` for the empty sequence is the number 0; and
+  - if ``d = 1``, for ``a \in \mathbb{N}``, the sequence code ``[a]`` for the sequence ``(a)`` of length 1, is ``\left\langle 1, a\right\rangle``.
+
+The constructor function for this struct will ensure that the given integer `P` is a valid goto programme.
+"""
 struct GoToProgramme <: Programme
     P::Integer
     programme_length::Integer
@@ -143,12 +270,12 @@ struct GoToProgramme <: Programme
         programme_length = sequence_dump.seq_length
         
         # construct list of codes for each instruction
-        instructions = iszero(programme_length) ? 0 : [i.instruction for i in snapshot]
+        instructions = iszero(programme_length) ? 0 : Tuple[i.instruction for i in snapshot]
         # check that the programme halts at the end
     	instructions[end] ≠ halt().instruction && throw(error("Goto programmes neccesarily have a halting instruction."))
             
 		max_line = programme_length - 1
-		lower_bound, upper_bound = extrema([__increment_identifier, __decrement_identifier, __goto_identifier, __ifzero_goto_identifier, __halt_identifier...])
+		lower_bound, upper_bound = extrema(Int[__increment_identifier, __decrement_identifier, __goto_identifier, __ifzero_goto_identifier, __halt_identifier...])
         row_counter = 0
         
         # check that all programme instruction codes are valid instructions
@@ -177,6 +304,15 @@ struct GoToProgramme <: Programme
     end # end constructor (GoToProgramme) function
 end # end struct
 
+"""
+```julia
+show_programme(io::IO, P::GoToProgramme)
+show_programme(P::GoToProgramme)
+show_programme(P::Integer)
+```
+
+Given a goto programme, this function will decode it into its constituent components.  It will default to `stdout`.
+"""
 function show_programme(io::IO, P::GoToProgramme)
 	# println("\033[1;38mThe number for $(P.P) pertains to the following programme:\033[0;38m\n")
     row_counter = 0
@@ -217,12 +353,12 @@ show_programme(io::IO, P::Integer) = show_programme(io::IO, GoToProgramme(P))
 show_programme(P::GoToProgramme) = show_programme(stdout, P)
 show_programme(P::Integer) = show_programme(stdout, GoToProgramme(P))
 
-function Base.rand(::Type{T}, d::Integer; upper_bound::Integer=200) where T <: GoToProgramme
+function Base.rand(::GoToProgramme, d::Integer; upper_bound::Integer = 200)
 	return pair_tuple(d, pair_tuple(rand(1:upper_bound), halt().I))
 	return Sequence((d, (rand(1:upper_bound), halt().I))).q
 end
 
-function Base.rand(::Type{T}) where T <: GoToProgramme
+function Base.rand(::GoToProgramme)
 	while true
 		try
 			return rand(T, rand(2:10))
