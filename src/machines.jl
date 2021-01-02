@@ -4,24 +4,51 @@
     "${BASH_SOURCE[0]}" "$@"
     =#
 
-include(joinpath(dirname(@__FILE__), "abstract_types.jl"))
-include(joinpath(dirname(@__FILE__), "coding.jl"))
-include(joinpath(dirname(@__FILE__), "goto.jl"))
-include(joinpath(dirname(@__FILE__), "utils.jl"))
-
 #---Turing Machine-------------------------------------------------------------------------
 # Adapted form https://rosettacode.org/wiki/Universal_Turing_machine#Julia
 
 # define moving
+"""
+```julia
+@enum Move Left=1 Stay Right
+```
+
+An enumerated type `Move`.
+"""
 @enum Move Left=1 Stay Right
 
-# defing structs
+"""
+```julia
+mutable struct MachineState <: MachineComponent
+```
+    
+A snapshot of a state of a Turing machine.
+
+Fields:
+  - `state::String`: The name of the state of the Turing machine at the current machine state.
+  - `tape::Dict{Int, String}``: The current state of the tape of the machine.  The head will be at `Int` value, and the contents at `String` value.
+  - `headpos::Int`: The position of the head at the current state of the Turing Machine.
+"""
 mutable struct MachineState <: MachineComponent
     state::String
     tape::Dict{Int, String}
     headpos::Int
 end
- 
+
+"""
+```julia
+struct Rule <: MachineComponent
+```
+    
+Fields:
+  - `instate::String`: The state name (`String`) where the rule starts.
+  - `outstate::String`: The state name (`String`) where the rule ends.
+  - `s1::String`: What the Turing machine will read.
+  - `s2::String`: What the Turing machine will write.
+  - `move::String`: How the Turing machine will move (see `Move`).
+  
+Note: `instate` and `outstate` are connected nodes in the Turing Machine.
+"""
 struct Rule <: MachineComponent
     instate::String
     outstate::String
@@ -30,6 +57,18 @@ struct Rule <: MachineComponent
     move::Move
 end
 
+"""
+```julia
+struct TMProgramme <: TuringMachine
+```
+    
+Fields:
+  - `title::String`: A descriptive name for your programme.
+  - `initial::String`: The state name where the Turing machine begins.
+  - `final::String`: The state name where the Turing machine halts.
+  - `blank::String`: The symbol used to denote a blank cell.
+  - `Rules::Vector{Rule}``: A list of rules of the programme.
+"""
 struct TMProgramme <: TuringMachine
     title::String
     initial::String
@@ -37,7 +76,14 @@ struct TMProgramme <: TuringMachine
     blank::String
     rules::Vector{Rule}
 end
- 
+
+"""
+```julia
+Base.show(io::IO, mstate::MachineState)
+```
+
+Prints the current state of a Turing machine.
+"""
 function Base.show(io::IO, mstate::MachineState)
     ibracket(i, curpos, val) = isequal(i, curpos) ? "[$val]" : " $val "
     print(io, rpad("($(mstate.state))", 12))
@@ -45,7 +91,14 @@ function Base.show(io::IO, mstate::MachineState)
         print(io, "   $(ibracket(i, mstate.headpos, mstate.tape[i]))")
     end
 end
- 
+
+"""
+```julia
+run_turing_machine(TMProgramme, tape, verbose)
+```
+
+Run a specified Turing programme on a specified tape.  `verbose` is a boolean.
+"""
 function run_turing_machine(TMProgramme, tape, verbose)
     println("\u001b[1;38m$(TMProgramme.title)\u001b[0;38m")
     verbose && println(" State\t\t\tTape [head]\n", "-"^displaysize(stdout)[2])
@@ -86,11 +139,37 @@ end
 
 #--Register Machines--------------------------------------------------------------------------
 
+"""
+```julia
+mutable struct RegisterMachine <: Machine
+```
+
+A register machine.  That is, a machine with finitely many registers, whose registers contain a natural number n ∈ ℕ ∪ {0}.
+
+Fields:
+  - `contents::AbastractArray`: The contents of the registers.
+
+---
+```julia
+RegisterMachine(contents::AbstractArray)
+```
+
+A constructor function for the `struct` `RegisterMachine`.  Ensures the contents of the machine are indeed all natural numbers
+
+---
+
+```julia
+RegisterMachine(T::Union{Tuple, UnitRange})
+RegisterMachine(a::Integer, b::Integer...)
+```
+
+Constructor functions for the `struct` `RegisterMachine`.  Your contents are allowed to be tuples, ranges, or a series of integers.
+"""
 mutable struct RegisterMachine <: Machine
     contents::AbstractArray#Vector{<:Integer}
     
     function RegisterMachine(contents::AbstractArray)
-        arelessthan(0, contents) && throw(error("Registers must contain non-negative numbers."))
+        anylessthan(0, contents) && throw(error("Registers must contain non-negative numbers."))
         
         new(contents)
     end
@@ -99,7 +178,32 @@ mutable struct RegisterMachine <: Machine
     RegisterMachine(a::Integer...) = RegisterMachine([a...])
 end
 
-function run_goto_programme(P::GoToProgramme, R::RegisterMachine)::Tuple
+"""
+```julia
+run_goto_programme(P::GoToProgramme, R::RegisterMachine) -> RegisterMachine.contents
+run_goto_programme(P::GoToProgramme, T::Tuple) -> RegisterMachine.contents
+run_goto_programme(P::Integer, T::Tuple) -> RegisterMachine.contents
+run_goto_programme(P::Integer, R::RegisterMachine) -> RegisterMachine.contents
+```
+
+Takes in a *coded* programme `P` (for coding a programme, see notes), and runs the programme using register machine R.  It a tuple is given, will convert to a register machine whose contents is the tuple.  If an integer is given, will convert to a goto programme.
+
+Notes: There are five possible instructions for a GoTo programme:
+  - Increment Rᵢ  ⟵ `pair_tuple(0, i)`
+  - Decrement Rᵢ  ⟵ `pair_tuple(1, i)`
+  - Goto line k  ⟵ `pair_tuple(2, k)`
+  - If Rᵢ is zero, goto line k  ⟵ `pair_tuple(3, (i, k))`
+  - Halt  ⟵ `pair_tuple(4, 0)`
+  
+Then, the programme P, consisting of instructions I₁, I₂, ..., Iᵢ, is coded by
+    
+```julia
+pair_tuple(i, pair_tuple(I₁, I₂, ..., Iᵢ))
+```
+
+For utilities regarding these instructions, see `pair_tuple`, `Sequence`, `Instruction`, `increment`, `decrement`, `goto`, `ifzero_goto`, `halt`, and `GoToProgramme`.
+"""
+function run_goto_programme(P::GoToProgramme, R::RegisterMachine)
     line_number = 0
     
     for instruction in P.instructions
@@ -130,14 +234,12 @@ function run_goto_programme(P::GoToProgramme, R::RegisterMachine)::Tuple
     
     return tuple(R.contents...)
 end
-
-function run_goto_programme(P::GoToProgramme)::Tuple
+function run_goto_programme(P::GoToProgramme)
     max_register = extrema_tuple(P.instructions)[2][2] # the maximum value in the list of instructions in the second position
     R = RegisterMachine(zeros(Integer, max_register+1)) # fill register with zeros
     
     return run_goto_programme(P, R)
 end
-
 run_goto_programme(P::GoToProgramme, T::Tuple) = run_goto_programme(P, RegisterMachine(T))
 run_goto_programme(P::Integer, T::Tuple) = run_goto_programme(GoToProgramme(P), RegisterMachine(T))
 run_goto_programme(P::Integer, R::RegisterMachine) = run_goto_programme(GoToProgramme(P), R)

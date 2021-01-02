@@ -6,11 +6,12 @@
     
 module ComputabilityTheory
 
-include(joinpath(dirname(@__FILE__), "abstract_types.jl"))
-include(joinpath(dirname(@__FILE__), "coding.jl"))
-include(joinpath(dirname(@__FILE__), "machines.jl"))
-include(joinpath(dirname(@__FILE__), "goto.jl"))
+using Markdown
+using Printf: @printf
 
+include("utils.jl")
+
+# Abstract Types
 export Machine, TuringMachine, MachineComponent, Programme,
         ProgrammeComponent
 
@@ -21,5 +22,10 @@ export Tape, Left, Stay, Right, MachineState, Rule, TMProgramme,
 
 export Sequence, Instruction, GoToProgramme, increment, decrement,
         goto, ifzero_goto, halt, show_programme, rand
+
+include("abstract_types.jl")
+include("coding.jl")
+include("goto.jl")
+include("machines.jl")
 
 end # end module
