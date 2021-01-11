@@ -3,7 +3,7 @@
 </h1>
 
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://jakewilliami.github.io/ComputabilityTheory.jl/stable)
+<!-- [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://jakewilliami.github.io/ComputabilityTheory.jl/stable) -->
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://jakewilliami.github.io/ComputabilityTheory.jl/dev)
 [![CI](https://github.com/invenia/PkgTemplates.jl/workflows/CI/badge.svg)](https://github.com/jakewilliami/ComputabilityTheory.jl/actions?query=workflow%3ACI)
 [![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/invenia/BlueStyle)
