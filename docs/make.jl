@@ -14,17 +14,12 @@ Documenter.makedocs(
     ]
 )
 
-deploydocs(;
+deploydocs(
+    target = "build",
     repo   = "github.com/jakewilliami/ComputabilityTheory.jl.git",
+    branch = "gh-pages",
     devbranch = "master",
+    devurl = "dev",
+    versions = ["stable" => "v^", "v#.#.#", "dev" => "dev"],
+    push_preview    = false
 )
-
-# deploydocs(
-#     target = "build",
-#     repo   = "github.com/jakewilliami/ComputabilityTheory.jl.git",
-#     branch = "gh-pages",
-#     devbranch = "master",
-#     devurl = "dev",
-#     versions = ["stable" => "v^", "v#.#.#", "dev" => "dev"],
-#     push_preview    = false
-# )
