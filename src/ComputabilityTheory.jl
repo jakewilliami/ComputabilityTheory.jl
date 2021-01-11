@@ -6,7 +6,6 @@
     
 module ComputabilityTheory
 
-using Markdown
 using Printf: @printf
 
 include("utils.jl")
