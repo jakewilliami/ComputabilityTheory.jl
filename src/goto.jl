@@ -43,6 +43,15 @@ Instruction(i::Integer, j::Integer...) = Instruction((i, j...))
 ```
 
 Given a tuple or a list of values, the value of the instruction is the pair of all inputs.
+
+---
+
+### Examples
+
+```julia
+julia> Instruction((3, (1, 2))).I
+58
+```
 """
 struct Instruction <: ProgrammeCompoment
 	I::Integer
@@ -116,6 +125,15 @@ Sequence(i::Integer, j::Integer...)
 ```
 
 The constructor methods for this struct decode the given value(s) into the sequence.
+	
+---
+
+### Examples
+
+```julia
+julia> Sequence(972292871301644916468488152875266508938968846389326007980307063346008398713128885682044504108288931767348821063618087715644933567266540511345568504718733339523678538338052787779884557674350959673597803113281693069940562881722205193604550737455583875504348606989700013337656597740101535).instructions
+(328, 4, 531, 4, 5, 0, 14)
+```
 """
 struct Sequence <: ProgrammeCompoment
 	q::Integer
@@ -251,6 +269,19 @@ It should also be noted that the sequence code for some base cases is defined as
   - if ``d = 1``, for ``a \in \mathbb{N}``, the sequence code ``[a]`` for the sequence ``(a)`` of length 1, is ``\left\langle 1, a\right\rangle``.
 
 The constructor function for this struct will ensure that the given integer `P` is a valid goto programme.
+	
+---
+
+### Examples
+
+```julia
+julia> GoToProgramme(121).length
+1
+
+julia> GoToProgramme(121).instructions
+1-element Array{Tuple{BigInt,BigInt},1}:
+ (4, 0)
+```
 """
 struct GoToProgramme <: Programme
     P::Integer
@@ -312,6 +343,15 @@ show_programme(P::Integer)
 ```
 
 Given a goto programme, this function will decode it into its constituent components.  It will default to `stdout`.
+
+---
+
+### Examples
+
+```julia
+julia> show_programme(121)
+0    halt
+```
 """
 function show_programme(io::IO, P::GoToProgramme)
 	# println("\033[1;38mThe number for $(P.P) pertains to the following programme:\033[0;38m\n")
@@ -353,6 +393,19 @@ show_programme(io::IO, P::Integer) = show_programme(io::IO, GoToProgramme(P))
 show_programme(P::GoToProgramme) = show_programme(stdout, P)
 show_programme(P::Integer) = show_programme(stdout, GoToProgramme(P))
 
+"""
+
+---
+
+### Examples
+
+```julia
+julia> show_programme(rand(GoToProgramme), 3) # a reasonably small random programme with 3 lines
+0    R3 := R3 + 1
+1    if R0 = 0 goto 1
+2    halt
+```
+"""
 function Base.rand(::GoToProgramme, d::Integer; upper_bound::Integer = 200)
 	return pair_tuple(d, pair_tuple(rand(1:upper_bound), halt().I))
 	return Sequence((d, (rand(1:upper_bound), halt().I))).q

@@ -74,6 +74,15 @@ For more information, see [https://en.m.wikipedia.org/wiki/Pairing_function](htt
         ```math
         \left(x_0, x_1, \ldots, x_{n - 1}\right) \mapsto \left\langle x_0, \left\langle x_1, \ldots, x_{n - 1}\right\rangle\right\rangle
         ```
+
+---
+
+### Examples
+
+```julia
+julia> pair_tuple(5,7) # code pair of natural numbers as a natural number
+83
+```
 """
 pair_tuple(x::Integer, y::Integer) = x < 0 || y < 0 ? throw(error("$pairntuple_error")) : big(x) + binomial(big(x)+big(y)+1, 2)
 pair_tuple(x::Integer, y::Integer, z::Integer...) = pair_tuple(pair_tuple(x, y), z...)
@@ -191,6 +200,21 @@ This function may also take in a third parameter ``k`` so that
 !!! note
     
     See the note from documentation on `pair_tuple`.  This function may not do exactly what you expect.
+
+---
+
+### Examples
+
+```julia
+julia> π(83, algebraic = false) # code a natural number into a 2-tuple
+(5, 7)
+
+julia> π(83, 2, algebraic = true) # use algebraic method of depairing rather than search (much faster)
+(5, 7)
+
+julia> π(83, 2, 1, algebraic = false) # code a natural number into a 2-tuple and get the the number in the tuple indexed by 1 (index starting from zero)
+7
+```
 """
 π(m::Integer...; algebraic::Bool = true) =
     algebraic ? _π(m...) : _π_brute_force(m...)
@@ -236,6 +260,18 @@ Given a tuple, `cℤ` will convert ever element of the tuple into natural number
 \left(z_1, \ldots, z_n\right) \mapsto c\mathbb{Z}\left(\left\langle z_1\right\rangle\right), \ldots, c\mathbb{Z}\left(\left\langle z_n\right\rangle\right)\\
 \mathbb{Z}^n \to \mathbb{N}
 ```
+
+---
+
+### Examples
+
+```julia
+julia> cℤ(-10) # code integer as a natural number
+19
+
+julia> cℤ((-1,2)) # cℤ pairs the code of each
+16
+```
 """
 cℤ(z::Integer) = z >= 0 ? 2 * big(z) : (2 * abs(big(z))) - 1
 cℤ(z::Integer, w::Integer...) = cℤ(z), cℤ(w...)...
@@ -260,6 +296,15 @@ cℤ⁻¹(zs::AbstractArray{<:Integer})
 ```
 
 Given an array of integers, `cℤ⁻¹` will convert every element of the array into integers.
+
+---
+
+### Examples
+
+```julia
+julia> cℤ⁻¹(19)
+-10
+```
 """
 cℤ⁻¹(n::Integer) = n < 0 ? throw(error("$cℤ⁻¹_error")) : (iseven(n) ? Int(big(n) / 2) : -Int(floor(big(n) / 2) + 1))
 cℤ⁻¹(ns::AbstractArray{<:Integer}) = cℤ⁻¹.(ns)

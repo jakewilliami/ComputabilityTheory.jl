@@ -202,6 +202,18 @@ pair_tuple(i, pair_tuple(I₁, I₂, ..., Iᵢ))
 ```
 
 For utilities regarding these instructions, see `pair_tuple`, `Sequence`, `Instruction`, `increment`, `decrement`, `goto`, `ifzero_goto`, `halt`, and `GoToProgramme`.
+
+---
+
+### Examples
+
+```julia
+julia> run_goto_programme(363183787614755732766753446033240)
+(1, 0)
+
+julia> run_goto_programme(363183787614755732766753446033240, Register(0, 0, 0 ,0))
+(1, 0, 0, 0)
+```
 """
 function run_goto_programme(P::GoToProgramme, R::RegisterMachine)
     line_number = 0
