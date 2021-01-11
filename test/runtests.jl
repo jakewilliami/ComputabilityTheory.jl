@@ -11,6 +11,9 @@ using Test
 
 @time @testset "ComputabilityTheory.jl" begin
 ### CODING
+	@test 1 ∸ 2 == 0
+	@test 2 ∸ 1 == 1
+
     @test pair_tuple(5,7) == 83
     @test pair_tuple(5,7,20) == 5439
     @test pair_tuple([1,2,3,4,5,6,7,8,9]...) == 131504586847961235687181874578063117114329409897615188504091716162522225834932122128288032336298131
