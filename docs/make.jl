@@ -15,7 +15,7 @@ Documenter.makedocs(
 )
 
 deploydocs(;
-    repo    =   "github.com/jakewilliami/ComputabilityTheory.jl.git",
+    repo  =  "github.com/jakewilliami/ComputabilityTheory.jl.git",
 )
 
 # deploydocs(
