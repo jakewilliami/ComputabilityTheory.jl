@@ -242,6 +242,7 @@ This struct has fields:
 
 ```julia
 GoToProgramme(P::Integer)
+GoToProgramme(S::Sequence)
 ```
 
 A goto programme can be coded by a single number!  This number in the struct is `P`.
@@ -290,15 +291,14 @@ struct GoToProgramme <: Programme
     max_line::Integer
     
     # declare constructor function
-    function GoToProgramme(P::Integer) # P is the code for a sequence of a programme
+    function GoToProgramme(P::Sequence) # P is the code for a sequence of a programme
         # Ensure the programme P is at least the nothing programme
 		smallest_programme = Sequence(1, halt().I).q
-        P < smallest_programme && throw(error("The smallest possible programme is coded by $(smallest_programme)."))
+        P.q < smallest_programme && throw(error("The smallest possible programme is coded by $(smallest_programme)."))
         
         # generate the snapshot of programme P
-		sequence_dump = Sequence(P)
-		snapshot = Instruction.(sequence_dump.instructions)
-        programme_length = sequence_dump.seq_length
+		snapshot = Instruction.(P.instructions)
+        programme_length = P.seq_length
         
         # construct list of codes for each instruction
         instructions = iszero(programme_length) ? 0 : Tuple[i.instruction for i in snapshot]
@@ -331,8 +331,11 @@ struct GoToProgramme <: Programme
         end
         
         # construct fields
-        new(P, programme_length, instructions, max_line)
+        new(P.q, programme_length, instructions, max_line)
     end # end constructor (GoToProgramme) function
+	
+	# Add method for taking in an integer coding a sequence
+	GoToProgramme(P::Integer) = GoToProgramme(Sequence(P))
 end # end struct
 
 """
@@ -393,29 +396,67 @@ show_programme(io::IO, P::Integer) = show_programme(io::IO, GoToProgramme(P))
 show_programme(P::GoToProgramme) = show_programme(stdout, P)
 show_programme(P::Integer) = show_programme(stdout, GoToProgramme(P))
 
-"""
+@doc raw"""
+```julia
+rand_unsafe(::Type{GoToProgramme}, d::Integer; upper_bound::Integer = 200)
+```
+
+Finds a random go-to programme.
+
+`rand_unsafe` takes in the type, `GoToProgramme`, a number of lines of the programme, `d`, and an upper bound for the main instructions (coded; not including the `halt` instruction) which defaults to 200.  (Recall how we code instructions, using `pair_tuple`, so numbers between 1 and 200 will produce reasonably small codes)
+
+
+!!! note
+
+	*This sometimes fails, as not every random number will deconstruct into a nice go-to programme.  Programmatically, I have done as much as I can to try to avoid this failing.  It is more likely to fail as you increase the upper bound.  To avoid this, try using `rand`, though be warned it might be a little slower as it will keep trying till it finds something.
+
 
 ---
 
 ### Examples
 
 ```julia
-julia> show_programme(rand(GoToProgramme), 3) # a reasonably small random programme with 3 lines
+julia> show_programme(ComputabilityTheory.rand_unsafe(GoToProgramme, 3, upper_bound = 200)) # a reasonably small random programme with 3 lines
 0    R3 := R3 + 1
 1    if R0 = 0 goto 1
 2    halt
 ```
 """
-function Base.rand(::GoToProgramme, d::Integer; upper_bound::Integer = 200)
-	return pair_tuple(d, pair_tuple(rand(1:upper_bound), halt().I))
-	return Sequence((d, (rand(1:upper_bound), halt().I))).q
-end
+rand_unsafe(::Type{GoToProgramme}, d::Integer; upper_bound::Integer = 200) =
+	GoToProgramme(Sequence(d, (rand(1:upper_bound), halt().I)))
 
-function Base.rand(::GoToProgramme)
-	while true
-		try
-			return rand(T, rand(2:10))
-		catch
-		end
+@doc raw"""
+```julia
+rand(::Type{GoToProgramme}, d::Integer; upper_bound::Integer = 200)
+```
+
+Finds a random go-to programme.
+
+`rand` takes in the type, `GoToProgramme`, a number of lines of the programme, `d`, and an upper bound for the main instructions (coded; not including the `halt` instruction) which defaults to 200.  (Recall how we code instructions, using `pair_tuple`, so numbers between 1 and 200 will produce reasonably small codes)
+
+!!! note
+
+	*This may be slow*.  Depending on how large your upper bound is, it may take a while to find a valid code.
+
+
+---
+
+### Examples
+
+```julia
+julia> show_programme(rand(GoToProgramme, 3, upper_bound = 200)) # a reasonably small random programme with 3 lines
+0    R3 := R3 + 1
+1    if R0 = 0 goto 1
+2    halt
+```
+"""
+function Base.rand(::Type{GoToProgramme}, d::Integer; upper_bound::Integer = 200)
+	try
+		return rand_unsafe(GoToProgramme, d; upper_bound = upper_bound)
+	catch
+		return rand(GoToProgramme, d; upper_bound = upper_bound)
 	end
+
+	# should never get here
+	return nothing
 end
