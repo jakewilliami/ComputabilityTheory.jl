@@ -382,6 +382,7 @@ function show_programme(io::IO, P::GoToProgramme)
     
     return nothing
 end # end show_programme function
+Base.show(io::IO, P::GoToProgramme) = show_programme(io, P)
 
 # Given an integer, show_programme assumes it is a programme
 show_programme(io::IO, P::Integer) = show_programme(io::IO, GoToProgramme(P))
@@ -389,6 +390,14 @@ show_programme(io::IO, P::Integer) = show_programme(io::IO, GoToProgramme(P))
 # Fall back to standard output
 show_programme(P::GoToProgramme) = show_programme(stdout, P)
 show_programme(P::Integer) = show_programme(stdout, GoToProgramme(P))
+
+#=
+@doc raw"""
+    isvalid(::GoToProgramme)
+
+"""
+Base.isvalid()
+=#
 
 @doc raw"""
 ```julia
@@ -445,12 +454,18 @@ julia> show_programme(rand(GoToProgramme, 3, upper_bound = 200)) # a reasonably 
 ```
 """
 function Base.rand(::Type{GoToProgramme}, d::Integer; upper_bound::Integer = 200)
-	try
-		return rand_unsafe(GoToProgramme, d; upper_bound = upper_bound)
-	catch
-		return rand(GoToProgramme, d; upper_bound = upper_bound)
-	end
+    if d == 1
+        return GoToProgramme(Sequence(1, (4, 0)))  # Return the halt programme
+    # elseif d == 2
+        # halt_sequence = Sequence(1, (4, 0))
+    else
+	    try
+		    return rand_unsafe(GoToProgramme, d; upper_bound = upper_bound)
+	    catch
+		    return rand(GoToProgramme, d; upper_bound = upper_bound)
+	    end
+    end
 
 	# should never get here
-	return nothing
+	error("Unreachable")
 end
