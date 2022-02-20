@@ -110,11 +110,12 @@ The struct has the following fields:
   - `instructions::Tuple`
 
 ```julia
+Sequence(i::Instruction...)
+# convenience methods
 Sequence(q::Integer) # instructions_coded
 Sequence(t::Tuple) # (seq_length, instructions_coded)
 Sequence(seq_length::Integer, j::Tuple)
 Sequence(i::Integer, j::Integer...)
-Sequence(i::Instruction...)
 ```
 
 The constructor methods for this struct decode the given value(s) into the sequence.
@@ -126,7 +127,7 @@ julia> Sequence(9722928713016449164684881528752665089389688463893260079803070633
 (328, 4, 531, 4, 5, 0, 14)
 ```
 """
-struct Sequence <: ProgrammeCompoment
+mutable struct Sequence <: ProgrammeCompoment
 	q::Integer
 	seq_length::Integer
 	instructions::Tuple
@@ -161,6 +162,13 @@ struct Sequence <: ProgrammeCompoment
 	Sequence(i::Integer, j::Integer...) = Sequence((i, tuple(j...)))
     Sequence(i::Instruction...) = Sequence(length(i), Tuple(j.I for j in i))
 end # end struct
+
+function Base.push!(seq::Sequence, i::Instruction)
+   
+end
+# I::Integer
+# T::Tuple
+# i::Integer, j::Integer...
 
 @doc raw"""
 ```julia
@@ -349,37 +357,35 @@ julia> show_programme(121)
 ```
 """
 function show_programme(io::IO, P::GoToProgramme)
-	# println("\033[1;38mThe number for $(P.P) pertains to the following programme:\033[0;38m\n")
-    row_counter = 0
-    message = string() # initalise message with empty string
+    msg_io = IOBuffer()
     
-    for instruction in P.instructions
+    for (i, instruction) in enumerate(P.instructions)
         primary_identifier, secondary_identifier = instruction
         
 		if isequal(primary_identifier, _INCREMENT_IDENTIFIER)
             n = secondary_identifier
-            message = "R$n := R$n + 1"
+            print(msg_io, "R$n := R$n + 1")
         elseif isequal(primary_identifier, _DECREMENT_IDENTIFIER)
             n = secondary_identifier
-            message = "R$n := R$n - 1"
+            print(msg_io, "R$n := R$n - 1")
         elseif isequal(primary_identifier, _GOTO_IDENTIFIER)
             k = secondary_identifier
-            message = "goto $k"
+            print(msg_io, "goto $k")
         elseif isequal(primary_identifier, _IFZERO_GOTO_IDENTIFIER)
             n, k = secondary_identifier
-            message = "if R$n = 0 goto $k"
+            print(msg_io, "if R$n = 0 goto $k")
         elseif isequal(primary_identifier, halt().first) && isequal(secondary_identifier, halt().second)
-            message = "halt"
+            print(msg_io, "halt")
         else
-            message = "No known instruction for code ⟨$(join(instruction, ","))⟩"
+            print(msg_io, "No known instruction for code ⟨$(join(instruction, ","))⟩")
         end
         
-        @printf(io, "%-3.3s  %-60.60s\n", "$row_counter", "$message")
-		row_counter += 1
+        @printf(io, "%-3.3s  %-60.60s", "$(i - 1)", "$(String(take!(msg_io)))")
+        i < P.programme_length && println(io)
     end
-    
-    return nothing
 end # end show_programme function
+
+# extend base show method
 Base.show(io::IO, P::GoToProgramme) = show_programme(io, P)
 
 # Given an integer, show_programme assumes it is a programme
