@@ -38,8 +38,6 @@ Instruction(i::Integer, j::Integer...) = Instruction((i, j...))
 
 Given a tuple or a list of values, the value of the instruction is the pair of all inputs.
 
----
-
 ### Examples
 
 ```julia
@@ -103,7 +101,7 @@ struct Sequence <: ProgrammeCompoment
 For any ``d \in \mathbb{N}``, the sequence code of a sequence ``(a_0,a_1,\ldots,a_{d-1}) \in \mathbb{N}^d``, denoted by ``[a_0,a_1,\ldots,a_{d-1}]``, is
 
 ```math
-\left\langle d, \left\langle a a_0,a_1,\ldots,a_{d-1}\right\rangle\right\rangle
+q = \left\langle d, \left\langle a a_0,a_1,\ldots,a_{d-1}\right\rangle\right\rangle
 ```
 
 The struct has the following fields:
@@ -112,15 +110,14 @@ The struct has the following fields:
   - `instructions::Tuple`
 
 ```julia
-Sequence(q::Integer)
-Sequence(t::Tuple)
-Sequence(i::Integer, j::Tuple)
+Sequence(q::Integer) # instructions_coded
+Sequence(t::Tuple) # (seq_length, instructions_coded)
+Sequence(seq_length::Integer, j::Tuple)
 Sequence(i::Integer, j::Integer...)
+Sequence(i::Instruction...)
 ```
 
 The constructor methods for this struct decode the given value(s) into the sequence.
-	
----
 
 ### Examples
 
@@ -162,6 +159,7 @@ struct Sequence <: ProgrammeCompoment
 	
 	Sequence(i::Integer, j::Tuple) = Sequence(pair_tuple(i, pair_tuple(j...)))
 	Sequence(i::Integer, j::Integer...) = Sequence((i, tuple(j...)))
+    Sequence(i::Instruction...) = Sequence(length(i), Tuple(j.I for j in i))
 end # end struct
 
 @doc raw"""
