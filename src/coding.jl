@@ -81,7 +81,7 @@ julia> pair_tuple(5,7) # code pair of natural numbers as a natural number
 83
 ```
 """
-pair_tuple(x::Integer, y::Integer) = x < 0 || y < 0 ? throw(error("$pairntuple_error")) : big(x) + binomial(big(x)+big(y)+1, 2)
+pair_tuple(x::Integer, y::Integer) = x < 0 || y < 0 ? throw(DomainError(x < 0 ? x : y, pairntuple_error)) : big(x) + binomial(big(x)+big(y)+1, 2)
 pair_tuple(x::Integer, y::Integer, z::Integer...) = pair_tuple(pair_tuple(x, y), z...)
 pair_tuple(t::Tuple) = pair_tuple(t...)
 
@@ -135,10 +135,8 @@ function _π(m::Integer)
     t = (w^2 + w) ÷ 2
     x = m - t
     y = w - x
-        
-    if ! isequal(pair_tuple(x, y), m)
-        throw(error("The provided m = $m is not equal to ⟨ $x, $y ⟩, and so there has been an error in the calculation."))
-    end
+    
+    @assert isequal(pair_tuple(x, y), m) "The provided m = $m is not equal to ⟨ $x, $y ⟩, and so there has been an error in the calculation."
     
     return BigInt(x), BigInt(y)
 end
@@ -303,5 +301,5 @@ julia> cℤ⁻¹(19)
 -10
 ```
 """
-cℤ⁻¹(n::Integer) = n < 0 ? throw(error("$cℤ⁻¹_error")) : (iseven(n) ? Int(big(n) / 2) : -Int(floor(big(n) / 2) + 1))
+cℤ⁻¹(n::Integer) = n < 0 ? throw(DomainError(n, cℤ⁻¹_error)) : (iseven(n) ? Int(big(n) / 2) : -Int(floor(big(n) / 2) + 1))
 cℤ⁻¹(ns::AbstractArray{<:Integer}) = cℤ⁻¹.(ns)

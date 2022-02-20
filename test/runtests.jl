@@ -12,6 +12,7 @@ using Test
             @test pair_tuple(5,7) == 83
             @test pair_tuple(5,7,20) == 5439
             @test pair_tuple([1,2,3,4,5,6,7,8,9]...) == 131504586847961235687181874578063117114329409897615188504091716162522225834932122128288032336298131
+            @test_throws DomainError pair_tuple(-1, 1)
         end
         
         @testset "Depair tuple" begin
@@ -44,6 +45,7 @@ using Test
 	        int_random2 = rand(Int)
 	        @test cℤ(cℤ⁻¹(abs(int_random1))) == abs(int_random1)
 	        @test cℤ⁻¹(cℤ(int_random2)) == int_random2
+            @test_throws DomainError cℤ⁻¹(-abs(rand(Int)))
         end
     end
 
@@ -59,15 +61,25 @@ using Test
 	        @test Instruction((3, 1, 2)).I == 58
 	        @test Instruction(3, 1, 2).I == 58
 	        @test Instruction(4, 0).I == 14
+            @test_throws ErrorException Instruction(1, 2, 3, 4)
+            @test_throws ErrorException Instruction((5, 6, 7, 8))
         end # end instructions testset
         
         @testset "Sequence" begin
             @test Sequence(972292871301644916468488152875266508938968846389326007980307063346008398713128885682044504108288931767348821063618087715644933567266540511345568504718733339523678538338052787779884557674350959673597803113281693069940562881722205193604550737455583875504348606989700013337656597740101535).instructions == (328, 4, 531, 4, 5, 0, 14)
+            @test_throws ErrorException Sequence(1, abs.(rand(Int, rand(2:10)))...) # "The first number in your sequence should match the length of your sequence."
         end # end sequence testset
         
-        @testset "Programme" begin
+        @testset "Programmes/Machines" begin
+            @test_throws ErrorException GoToProgramme(120) # 121 is the smallest possible programme encoding
+            @test_throws ErrorException GoToProgramme(Sequence(2, increment(14).I, increment(15).I)) # Goto programmes neccesarily have a halting instruction.
 	        @test GoToProgramme(121).programme_length == 1
+            @test length(GoToProgramme(121)) == 1
 	        @test GoToProgramme(972292871301644916468488152875266508938968846389326007980307063346008398713128885682044504108288931767348821063618087715644933567266540511345568504718733339523678538338052787779884557674350959673597803113281693069940562881722205193604550737455583875504348606989700013337656597740101535).programme_length == 7
+            @test_throws ErrorException GoToProgramme(Sequence(2, Instruction(5, 2).I, halt().I)) # No known instruction for code ⟨5,2⟩
+            @test_throws ErrorException GoToProgramme(Sequence(2, halt().I, halt().I)) # You must have exactly one halting instruction at the end of the programme.
+            @test_throws ErrorException GoToProgramme(Sequence(2, goto(15).I, halt().I)) # I cannot go to line 15 of a programme which has 1 lines.
+            @test_throws ErrorException GoToProgramme(Sequence(2, goto(0).I, halt().I)) #  I am told to go to my own line (at line 0, goto line 0), and so I am stuck in an infinite loop.  The only way to escape is to tell you.  Please help me.
 	        
 	        io = IOBuffer()
 	        show_programme(io, 121)
@@ -77,6 +89,7 @@ using Test
 	        show_programme(io, 972292871301644916468488152875266508938968846389326007980307063346008398713128885682044504108288931767348821063618087715644933567266540511345568504718733339523678538338052787779884557674350959673597803113281693069940562881722205193604550737455583875504348606989700013337656597740101535)
 	        @test occursin(r"6[[:space:]]*halt", String(take!(io)))
             
+            @test_throws DomainError RegisterMachine(-1)
             @test run_goto_programme(121) == tuple(0)
 	        @test run_goto_programme(363183787614755732766753446033240, RegisterMachine(1, 2, 3)) == tuple(2, 1, 3)
 	        @test run_goto_programme(972292871301644916468488152875266508938968846389326007980307063346008398713128885682044504108288931767348821063618087715644933567266540511345568504718733339523678538338052787779884557674350959673597803113281693069940562881722205193604550737455583875504348606989700013337656597740101535, (3, 1, 1)) == tuple(4, 0, 1)
@@ -89,6 +102,9 @@ using Test
 	        io = IOBuffer()
 	        show_programme(io, rand(GoToProgramme, 11))
 	        @test occursin(r"[[:digit:]][[:digit:]][[:space:]]*halt", String(take!(io)))
+            
+            # Test with sequence constructors
+            @test string(GoToProgramme(Sequence((2, (121,14))))) == "0    R14 := R14 - 1                                              \n1    halt                                                        "
         end # end programme testset
     end # end go-to testset
 end # end testset

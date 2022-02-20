@@ -163,7 +163,8 @@ mutable struct RegisterMachine <: Machine
     contents::AbstractArray#Vector{<:Integer}
     
     function RegisterMachine(contents::AbstractArray)
-        anylessthan(0, contents) && throw(error("Registers must contain non-negative numbers."))
+        anylessthan(0, contents) && 
+            throw(DomainError(Tuple(findall(c -> c < 0, contents)), "Registers must contain non-negative numbers."))
         
         new(contents)
     end
