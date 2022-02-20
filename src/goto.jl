@@ -1,14 +1,8 @@
-#!/usr/bin/env bash
-    #=
-    exec julia --project="$(realpath $(dirname $0))" --color=yes --startup-file=no -e "include(popfirst!(ARGS))" \
-    "${BASH_SOURCE[0]}" "$@"
-    =#
-
-const __increment_identifier = 0
-const __decrement_identifier = 1
-const __goto_identifier = 2
-const __ifzero_goto_identifier = 3
-const __halt_identifier = (4, 0)
+const _INCREMENT_IDENTIFIER = 0
+const _DECREMENT_IDENTIFIER = 1
+const _GOTO_IDENTIFIER = 2
+const _IFZERO_GOTO_IDENTIFIER = 3
+const _HALT_IDENTIFIER = (4, 0)
 
 @doc raw"""
 ```julia
@@ -179,7 +173,7 @@ Constructs an `Instruction` object for incrementing the ``n\textsuperscript{th}`
 
 The code for "``Rn := Rn + 1``" is ``\left\langle 0, n\right\rangle``.
 """
-increment(n::Integer) = Instruction(__increment_identifier, n)
+increment(n::Integer) = Instruction(_INCREMENT_IDENTIFIER, n)
 
 @doc raw"""
 ```julia
@@ -190,7 +184,7 @@ Constructs an `Instruction` object for decrementing the ``n\textsuperscript{th}`
 
 The code for "``Rn := Rn - 1``" is ``\left\langle 1, n\right\rangle``.
 """
-decrement(n::Integer) = Instruction(__decrement_identifier, n)
+decrement(n::Integer) = Instruction(_DECREMENT_IDENTIFIER, n)
 
 @doc raw"""
 ```julia
@@ -201,7 +195,7 @@ Constructs an `Instruction` object for going to line ``k``.
 
 The code for "``\texttt{goto } k``" is ``\left\langle 2, k\right\rangle``.
 """
-goto(k::Integer) = Instruction(__goto_identifier, k)
+goto(k::Integer) = Instruction(_GOTO_IDENTIFIER, k)
 
 @doc raw"""
 ```julia
@@ -213,8 +207,8 @@ Constructs an `Instruction` object for going to line ``k`` if and only  if the `
 
 The code for "``\texttt{if } Rn = 0 \texttt{ goto } k``" is ``\left\langle 3, \left\langle n, k\right\rangle\right\rangle``.
 """
-ifzero_goto(t::NTuple{2, Integer}) = Instruction(__ifzero_goto_identifier, t...)
-ifzero_goto(n::Integer, k::Integer) = Instruction(__ifzero_goto_identifier, (n, k)...)
+ifzero_goto(t::NTuple{2, Integer}) = Instruction(_IFZERO_GOTO_IDENTIFIER, t...)
+ifzero_goto(n::Integer, k::Integer) = Instruction(_IFZERO_GOTO_IDENTIFIER, (n, k)...)
 
 @doc raw"""
 ```julia
@@ -225,7 +219,7 @@ Constructs an `Instruction` object for the final line of all goto programmes: `h
 
 The code for "``\texttt{halt}``" is ``\left\langle 4, 0\right\rangle``.
 """
-halt() = Instruction(__halt_identifier...)
+halt() = Instruction(_HALT_IDENTIFIER...)
 
 @doc raw"""
 ```julia
@@ -306,7 +300,7 @@ struct GoToProgramme <: Programme
     	instructions[end] ≠ halt().instruction && throw(error("Goto programmes neccesarily have a halting instruction."))
             
 		max_line = programme_length - 1
-		lower_bound, upper_bound = extrema(Int[__increment_identifier, __decrement_identifier, __goto_identifier, __ifzero_goto_identifier, __halt_identifier...])
+		lower_bound, upper_bound = extrema(Int[_INCREMENT_IDENTIFIER, _DECREMENT_IDENTIFIER, _GOTO_IDENTIFIER, _IFZERO_GOTO_IDENTIFIER, _HALT_IDENTIFIER...])
         row_counter = 0
         
         # check that all programme instruction codes are valid instructions
@@ -321,9 +315,9 @@ struct GoToProgramme <: Programme
                 throw(error("You must have exactly one halting instruction at the end of the programme."))
             end
             
-            if isequal(primary_identifier, __goto_identifier) && secondary_identifier > max_line
+            if isequal(primary_identifier, _GOTO_IDENTIFIER) && secondary_identifier > max_line
                 throw(error("I cannot go to line $secondary_identifier of a programme which has $max_line instructions."))
-            elseif isequal(primary_identifier, __goto_identifier) && isequal(secondary_identifier, row_counter)
+            elseif isequal(primary_identifier, _GOTO_IDENTIFIER) && isequal(secondary_identifier, row_counter)
                 throw(error("I am told to go to my own line (at line $secondary_identifier, goto line $secondary_identifier), and so I am stuck in an infinite loop.  The only way to escape is to tell you.  Please help me."))
             end
 			
@@ -364,16 +358,16 @@ function show_programme(io::IO, P::GoToProgramme)
     for instruction in P.instructions
         primary_identifier, secondary_identifier = instruction
         
-		if isequal(primary_identifier, __increment_identifier)
+		if isequal(primary_identifier, _INCREMENT_IDENTIFIER)
             n = secondary_identifier
             message = "R$n := R$n + 1"
-        elseif isequal(primary_identifier, __decrement_identifier)
+        elseif isequal(primary_identifier, _DECREMENT_IDENTIFIER)
             n = secondary_identifier
             message = "R$n := R$n - 1"
-        elseif isequal(primary_identifier, __goto_identifier)
+        elseif isequal(primary_identifier, _GOTO_IDENTIFIER)
             k = secondary_identifier
             message = "goto $k"
-        elseif isequal(primary_identifier, __ifzero_goto_identifier)
+        elseif isequal(primary_identifier, _IFZERO_GOTO_IDENTIFIER)
             n, k = secondary_identifier
             message = "if R$n = 0 goto $k"
         elseif isequal(primary_identifier, halt().first) && isequal(secondary_identifier, halt().second)

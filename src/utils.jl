@@ -1,9 +1,3 @@
-#!/usr/bin/env bash
-    #=
-    exec julia --project="$(realpath $(dirname $(dirname $0)))" --color=yes --startup-file=no -e "include(popfirst!(ARGS))" \
-    "${BASH_SOURCE[0]}" "$@"
-    =#
-
 #=
 Check that all elements in a list are less than a given x.
 =#

@@ -1,9 +1,3 @@
-#!/usr/bin/env bash
-    #=
-    exec julia --project="$(realpath $(dirname $0))" --color=yes --startup-file=no -e 'include(popfirst!(ARGS))' \
-    "${BASH_SOURCE[0]}" "$@"
-    =#
-
 #---Turing Machine-------------------------------------------------------------------------
 # Adapted form https://rosettacode.org/wiki/Universal_Turing_machine#Julia
 
@@ -221,17 +215,17 @@ function run_goto_programme(P::GoToProgramme, R::RegisterMachine)
     for instruction in P.instructions
         primary_identifier, secondary_identifier = instruction
     
-        if isequal(primary_identifier, __increment_identifier)
+        if isequal(primary_identifier, _INCREMENT_IDENTIFIER)
             n = secondary_identifier
             R.contents[n + 1] += 1
-        elseif isequal(primary_identifier, __decrement_identifier)
+        elseif isequal(primary_identifier, _DECREMENT_IDENTIFIER)
             n = secondary_identifier
             R.contents[n + 1] = R.contents[n + 1] ∸ 1
-        elseif isequal(primary_identifier, __goto_identifier)
+        elseif isequal(primary_identifier, _GOTO_IDENTIFIER)
             k = secondary_identifier
             line_number = k
             continue
-        elseif isequal(primary_identifier, __ifzero_goto_identifier)
+        elseif isequal(primary_identifier, _IFZERO_GOTO_IDENTIFIER)
             n, k = secondary_identifier
             if iszero(R.contents[n + 1])
                 line_number = k
