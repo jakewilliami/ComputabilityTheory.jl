@@ -6,7 +6,7 @@ const _HALT_IDENTIFIER = (4, 0)
 
 @doc raw"""
 ```julia
-struct Instruction <: ProgrammeCompoment
+struct Instruction <: ProgrammeComponent
 ```
 
 An instruction is a command spanning a single line in a goto programme.
@@ -45,7 +45,7 @@ julia> Instruction((3, (1, 2))).I
 58
 ```
 """
-struct Instruction <: ProgrammeCompoment
+struct Instruction <: ProgrammeComponent
 	I::Integer
 	first::Integer
 	second::Integer
@@ -95,13 +95,13 @@ end # end struct
 
 @doc raw"""
 ```julia
-struct Sequence <: ProgrammeCompoment
+struct Sequence <: ProgrammeComponent
 ```
 
 For any ``d \in \mathbb{N}``, the sequence code of a sequence ``(a_0,a_1,\ldots,a_{d-1}) \in \mathbb{N}^d``, denoted by ``[a_0,a_1,\ldots,a_{d-1}]``, is
 
 ```math
-q = \left\langle d, \left\langle a a_0,a_1,\ldots,a_{d-1}\right\rangle\right\rangle
+q = \left\langle d, \left\langle a_0,a_1,\ldots,a_{d-1}\right\rangle\right\rangle
 ```
 
 The struct has the following fields:
@@ -127,19 +127,67 @@ julia> Sequence(9722928713016449164684881528752665089389688463893260079803070633
 (328, 4, 531, 4, 5, 0, 14)
 ```
 """
-mutable struct Sequence <: ProgrammeCompoment
+mutable struct Sequence <: ProgrammeComponent
+    code::Integer
+    instructions::Vector{Instruction}
+    
+    # Base method
+    Sequence(code::Integer, instructions::Vector{Instruction}) = new(code, instructions)
+    
+    # Construct a sequence from a list of instructions
+    function Sequence(instructions::Vector{Instruction})
+        d = length(instructions)
+        q = pair_tuple(d, (i.I for i in instructions)...)
+        return Sequence(q, instructions)
+    end
+    Sequence(instructions::Instruction...) = Sequence(Instruction[instructions...])
+    
+    # Construct a sequence with convenient methods
+    function Sequence(q::Integer)
+        seq_length, instructions_coded = π(q)
+        if seq_length == 0
+            @warn "Your input integer code for the sequence implies you have length zero of your sequence.  Please ensure this is correct."
+            return Sequence(q, Instruction[])
+        end
+        instruction_vals = Integer[π(instructions_coded, seq_length)...]
+        return Sequence(q, Instruction[Instruction(i) for i in instruction_vals])
+    end
+    function Sequence(t::Tuple{T, NTuple{N, U}}) where {T <: Integer, U <: Integer, N} # e.g., (1, (121, ))
+        seq_length, instructions = t
+        
+        sequence_length_error = "The first number in your sequence should match the length of your sequence."
+		seq_length ≠ length(instructions) && throw(error(sequence_length_error))
+        
+        q = pair_tuple(seq_length, pair_tuple(instructions))
+        
+        return Sequence(q)
+    end
+    function Sequence(t::NTuple{N, T}) where {T <: Integer, N}
+        seq_length, instructions = first(t), Base.tail(t)
+        return Sequence((seq_length, instructions))
+    end
+    Sequence(i::Integer, j::Tuple) = Sequence(pair_tuple(i, pair_tuple(j...)))
+	Sequence(i::Integer, j::Integer...) = Sequence((i, tuple(j...)))
+    # Sequence(i::Instruction...) = Sequence(length(i), Tuple(j.I for j in i))
+end
+Base.length(seq::Sequence) = length(seq.instructions)
+#=mutable struct Sequence <: ProgrammeComponent
 	q::Integer
 	seq_length::Integer
 	instructions::Tuple
 	
 	function Sequence(q::Integer)
 		seq_length, instructions = π(q)
+        # TODO: sometimes, seq_length might depair to be zero.  We need to handle that better
+        if seq_length == 0
+            return new(q, seq_length, ())
+        end
 		instructions = isone(seq_length) ? (instructions,) : π(instructions, seq_length)
 		
 		new(q, seq_length, instructions)
 	end
 	
-	function Sequence(t::Tuple)
+    function Sequence(t::Tuple)
 		q = nothing
 		seq_length, instructions = Base.first(t), t[2]
 
@@ -157,18 +205,36 @@ mutable struct Sequence <: ProgrammeCompoment
 		
 		new(q, seq_length, instructions)
 	end
+	#=function Sequence(t::Tuple) # e.g. (1, (121,)) or (1, 121)
+		q = nothing
+        seq_length, instructions = Base.first(t), t[2]
+        println(instructions)
+        
+        if instructions isa Tuple
+            println(instructions)
+			q = pair_tuple(seq_length, pair_tuple(t[2]))
+		end
+        
+		if instructions isa Integer
+            instructions = Base.tail(t)
+            println(instructions)
+			q = pair_tuple(seq_length, pair_tuple(instructions))
+		end
+        
+        sequence_length_error = "The first number in your sequence should match the length of your sequence."
+		seq_length ≠ length(instructions) && throw(error(sequence_length_error))
+		
+		new(q, seq_length, instructions)
+	end=#
 	
 	Sequence(i::Integer, j::Tuple) = Sequence(pair_tuple(i, pair_tuple(j...)))
 	Sequence(i::Integer, j::Integer...) = Sequence((i, tuple(j...)))
     Sequence(i::Instruction...) = Sequence(length(i), Tuple(j.I for j in i))
 end # end struct
+=#
 
-function Base.push!(seq::Sequence, i::Instruction)
-   
+function Base.push!(seq::Sequence, i::Instruction) 
 end
-# I::Integer
-# T::Tuple
-# i::Integer, j::Integer...
 
 @doc raw"""
 ```julia
@@ -270,6 +336,10 @@ It should also be noted that the sequence code for some base cases is defined as
   - if ``d = 1``, for ``a \in \mathbb{N}``, the sequence code ``[a]`` for the sequence ``(a)`` of length 1, is ``\left\langle 1, a\right\rangle``.
 
 The constructor function for this struct will ensure that the given integer `P` is a valid goto programme.
+
+!!! note
+
+    Lines of this programme start at 0.
 	
 ---
 
@@ -307,27 +377,25 @@ struct GoToProgramme <: Programme
             
 		max_line = programme_length - 1
 		lower_bound, upper_bound = extrema(Int[_INCREMENT_IDENTIFIER, _DECREMENT_IDENTIFIER, _GOTO_IDENTIFIER, _IFZERO_GOTO_IDENTIFIER, _HALT_IDENTIFIER...])
-        row_counter = 0
+        halt_instruction = halt()
         
         # check that all programme instruction codes are valid instructions
-        for instruction in instructions
+        for (i, instruction) in enumerate(instructions)
             primary_identifier, secondary_identifier = instruction
             
 			if primary_identifier < lower_bound || primary_identifier > upper_bound || (isequal(primary_identifier, halt().first) && ! isequal(secondary_identifier, halt().second))
                 throw(error("No known instruction for code ⟨$(join(instruction, ","))⟩"))
             end
             
-            if isequal(primary_identifier, halt().first) && ! isequal(secondary_identifier, halt().second) && ! isequal(max_line, row_counter)
+            if isequal(primary_identifier, halt_instruction.first) && isequal(secondary_identifier, halt_instruction.second) && i <= max_line
                 throw(error("You must have exactly one halting instruction at the end of the programme."))
             end
             
             if isequal(primary_identifier, _GOTO_IDENTIFIER) && secondary_identifier > max_line
-                throw(error("I cannot go to line $secondary_identifier of a programme which has $max_line instructions."))
-            elseif isequal(primary_identifier, _GOTO_IDENTIFIER) && isequal(secondary_identifier, row_counter)
+                throw(error("I cannot go to line $secondary_identifier of a programme which has $max_line lines."))
+            elseif isequal(primary_identifier, _GOTO_IDENTIFIER) && isequal(secondary_identifier, i - 1)
                 throw(error("I am told to go to my own line (at line $secondary_identifier, goto line $secondary_identifier), and so I am stuck in an infinite loop.  The only way to escape is to tell you.  Please help me."))
             end
-			
-			row_counter += 1
         end
         
         # construct fields
@@ -337,6 +405,8 @@ struct GoToProgramme <: Programme
 	# Add method for taking in an integer coding a sequence
 	GoToProgramme(P::Integer) = GoToProgramme(Sequence(P))
 end # end struct
+
+Base.length(P::GoToProgramme) = length(P.programme_length)
 
 """
 ```julia
